@@ -99,8 +99,20 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
         // 3. APPLY FOR SCHOLARSHIP (GET)
         public async Task<IActionResult> Apply(int scholarshipId)
         {
+            string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
             var scholarship = await _context.Scholarships.FindAsync(scholarshipId);
             if (scholarship == null || scholarship.Status != "Open") return NotFound();
+
+            // Prevent direct URL access if already applied
+            bool hasAlreadyApplied = await _context.Applications
+                .AnyAsync(a => a.ScholarshipId == scholarshipId && a.StudentId == currentUserId);
+
+            if (hasAlreadyApplied)
+            {
+                TempData["ErrorMessage"] = $"You have already submitted an application for '{scholarship.Title}'.";
+                return RedirectToAction(nameof(TrackStatus));
+            }
 
             var model = new ApplicationSubmissionViewModel
             {
@@ -123,6 +135,16 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
 
             var scholarship = await _context.Scholarships.FindAsync(model.ScholarshipId);
             if (scholarship == null) return NotFound();
+
+            // DUPLICATE CHECK
+            bool hasAlreadyApplied = await _context.Applications
+                .AnyAsync(a => a.ScholarshipId == model.ScholarshipId && a.StudentId == currentUserId);
+
+            if (hasAlreadyApplied)
+            {
+                TempData["ErrorMessage"] = $"You have already submitted an application for '{scholarship.Title}'.";
+                return RedirectToAction(nameof(TrackStatus));
+            }
 
             if (model.DocumentFile != null && model.DocumentFile.Length > 0)
             {
