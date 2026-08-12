@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Digital_Scholarship_Management_System_DDAC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260812164553_CreateIdentitySchema")]
-    partial class CreateIdentitySchema
+    [Migration("20260812161727_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("FullName")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("LockoutEnabled")
@@ -90,6 +91,214 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Application", b =>
+                {
+                    b.Property<int>("ApplicationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ApplicationId"));
+
+                    b.Property<DateTime?>("DecisionAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DecisionByUserId")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ScholarshipId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("ApplicationId");
+
+                    b.ToTable("Applications");
+                });
+
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Document", b =>
+                {
+                    b.Property<int>("DocumentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("DocumentId"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("VerificationStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("DocumentId");
+
+                    b.ToTable("Documents");
+                });
+
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Notification", b =>
+                {
+                    b.Property<int>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("NotificationId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("NotificationId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Review", b =>
+                {
+                    b.Property<int>("ReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ReviewId"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RecommendedDecision")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReviewerId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("Score")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("ReviewId");
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Scholarship", b =>
+                {
+                    b.Property<int>("ScholarshipId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ScholarshipId"));
+
+                    b.Property<decimal>("AmountPerRecipient")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<DateTime?>("ApplicationDeadline")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("MaxHouseholdIncome")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal?>("MinCgpa")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("Quota")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequiredProgram")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("ScholarshipId");
+
+                    b.ToTable("Scholarships");
+                });
+
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.StudentProfile", b =>
+                {
+                    b.Property<int>("StudentProfileId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("StudentProfileId"));
+
+                    b.Property<decimal?>("Cgpa")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal?>("HouseholdIncome")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ProgramOfStudy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("YearOfStudy")
+                        .HasColumnType("int");
+
+                    b.HasKey("StudentProfileId");
+
+                    b.ToTable("StudentProfiles");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

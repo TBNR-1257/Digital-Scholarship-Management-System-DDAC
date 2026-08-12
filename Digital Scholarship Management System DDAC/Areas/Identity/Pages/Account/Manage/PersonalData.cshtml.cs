@@ -6,31 +6,31 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using Digital_Scholarship_Management_System_DDAC.Data;
 
-namespace Digital_Scholarship_Management_System_DDAC.Areas.Identity.Pages.Account.Manage;
-
-public class PersonalDataModel : PageModel
+namespace Digital_Scholarship_Management_System_DDAC.Areas.Identity.Pages.Account.Manage
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ILogger<PersonalDataModel> _logger;
-
-    public PersonalDataModel(
-        UserManager<ApplicationUser> userManager,
-        ILogger<PersonalDataModel> logger)
+    public class PersonalDataModel : PageModel
     {
-        _userManager = userManager;
-        _logger = logger;
-    }
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<PersonalDataModel> _logger;
 
-    public async Task<IActionResult> OnGet()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
+        public PersonalDataModel(
+            UserManager<ApplicationUser> userManager,
+            ILogger<PersonalDataModel> logger)
         {
-            return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            _userManager = userManager;
+            _logger = logger;
         }
 
-        return Page();
+        public async Task<IActionResult> OnGet()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            return Page();
+        }
     }
 }
