@@ -1,0 +1,33 @@
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.RejectInstitutionViewModel
+
+@{
+    ViewData["Title"] = "Reject Institution";
+}
+
+<div class="container mt-4">
+    <h2>Reject Institution</h2>
+    <p>Rejecting <strong>@Model.InstitutionName</strong>. Please provide a reason so the institution knows why.</p>
+
+    <div class="card shadow-sm border-0" style="max-width: 500px;">
+        <div class="card-body">
+            <form asp-controller="Admin" asp-action="RejectInstitution" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="InstitutionName" />
+
+                <div class="mb-3">
+                    <label asp-for="RejectionReason" class="form-label"></label>
+                    <textarea asp-for="RejectionReason" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="RejectionReason" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-danger">Reject Institution</button>
+                <a asp-controller="Admin" asp-action="Institutions" class="btn btn-outline-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

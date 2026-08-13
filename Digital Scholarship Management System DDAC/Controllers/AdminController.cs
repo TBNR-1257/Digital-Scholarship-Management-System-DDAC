@@ -322,4 +322,103 @@ public class AdminController : Controller
         TempData["StatusMessage"] = $"Notification template \"{template.Name}\" was deleted.";
         return RedirectToAction(nameof(NotificationTemplates));
     }
+
+    // ---- Institution Activation ----
+
+    public async Task<IActionResult> Institutions(string? statusFilter)
+    {
+        var query = _context.InstitutionProfiles.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            query = query.Where(i => i.VerificationStatus == statusFilter);
+        }
+
+        var institutions = await query
+            .OrderBy(i => i.VerificationStatus)
+            .ThenBy(i => i.InstitutionName)
+            .Select(i => new InstitutionListItemViewModel
+            {
+                Id = i.InstitutionProfileId,
+                InstitutionName = i.InstitutionName,
+                ContactEmail = i.ContactEmail,
+                ContactPhone = i.ContactPhone,
+                VerificationStatus = i.VerificationStatus,
+                ModeratedAt = i.ModeratedAt,
+                ActivatedAt = i.ActivatedAt,
+                RejectionReason = i.RejectionReason
+            })
+            .ToListAsync();
+
+        ViewBag.StatusFilter = statusFilter;
+        return View(institutions);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActivateInstitution(int id)
+    {
+        var institution = await _context.InstitutionProfiles.FindAsync(id);
+        if (institution == null)
+        {
+            return NotFound();
+        }
+
+        if (institution.VerificationStatus != "PendingAdminActivation")
+        {
+            TempData["StatusMessage"] = $"\"{institution.InstitutionName}\" is not awaiting admin activation.";
+            return RedirectToAction(nameof(Institutions));
+        }
+
+        institution.VerificationStatus = "Active";
+        institution.ActivatedByUserId = _userManager.GetUserId(User);
+        institution.ActivatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        TempData["StatusMessage"] = $"\"{institution.InstitutionName}\" has been activated.";
+        return RedirectToAction(nameof(Institutions));
+    }
+
+    public async Task<IActionResult> RejectInstitution(int id)
+    {
+        var institution = await _context.InstitutionProfiles.FindAsync(id);
+        if (institution == null)
+        {
+            return NotFound();
+        }
+
+        var model = new RejectInstitutionViewModel
+        {
+            Id = institution.InstitutionProfileId,
+            InstitutionName = institution.InstitutionName
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectInstitution(RejectInstitutionViewModel model)
+    {
+        var institution = await _context.InstitutionProfiles.FindAsync(model.Id);
+        if (institution == null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.InstitutionName = institution.InstitutionName;
+            return View(model);
+        }
+
+        institution.VerificationStatus = "Rejected";
+        institution.RejectionReason = model.RejectionReason;
+        institution.ActivatedByUserId = _userManager.GetUserId(User);
+        institution.ActivatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        TempData["StatusMessage"] = $"\"{institution.InstitutionName}\" was rejected.";
+        return RedirectToAction(nameof(Institutions));
+    }
 }
