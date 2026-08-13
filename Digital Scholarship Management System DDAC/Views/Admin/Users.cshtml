@@ -1,4 +1,5 @@
-@model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.ViewModels.AdminUserListItemViewModel>
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.AdminUsersPageViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
     ViewData["Title"] = "Manage Users";
@@ -18,10 +19,36 @@
         </div>
     }
 
-    @if (!Model.Any())
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-controller="Admin" asp-action="Users" method="get" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">Search by name or email</label>
+                    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="e.g. Demo Student, admin@ddac.edu" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Role</label>
+                    <select name="roleFilter" class="form-select" asp-items="@(new SelectList(Model.AvailableRoles, Model.RoleFilter))">
+                        <option value="">All roles</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrWhiteSpace(Model.RoleFilter))
+                    {
+                        <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-secondary">Clear</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Users.Any())
     {
         <div class="alert alert-warning text-center py-4 shadow-sm">
-            <h5>No users found.</h5>
+            <h5>No users match your search.</h5>
         </div>
     }
     else
@@ -40,7 +67,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var user in Model)
+                            @foreach (var user in Model.Users)
                             {
                                 <tr>
                                     <td class="fw-bold">@user.FullName</td>

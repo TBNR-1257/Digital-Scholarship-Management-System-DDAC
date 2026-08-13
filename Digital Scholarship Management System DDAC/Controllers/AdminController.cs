@@ -23,9 +23,16 @@ public class AdminController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Users()
+    public async Task<IActionResult> Users(string? search, string? roleFilter)
     {
-        var users = _userManager.Users.OrderBy(u => u.FullName).ToList();
+        var query = _userManager.Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(u => u.FullName.Contains(search) || u.Email!.Contains(search));
+        }
+
+        var users = query.OrderBy(u => u.FullName).ToList();
         var list = new List<AdminUserListItemViewModel>();
 
         foreach (var user in users)
@@ -41,7 +48,20 @@ public class AdminController : Controller
             });
         }
 
-        return View(list);
+        if (!string.IsNullOrWhiteSpace(roleFilter))
+        {
+            list = list.Where(u => u.Role == roleFilter).ToList();
+        }
+
+        var model = new AdminUsersPageViewModel
+        {
+            Users = list,
+            Search = search,
+            RoleFilter = roleFilter,
+            AvailableRoles = _roleManager.Roles.Select(r => r.Name!).OrderBy(r => r).ToList()
+        };
+
+        return View(model);
     }
 
     public async Task<IActionResult> EditUserRole(string id)
