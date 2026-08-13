@@ -1,7 +1,133 @@
+@model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.Scholarship>
+
 @{
     ViewData["Title"] = "Student Dashboard";
+    var profile = ViewBag.StudentProfile as Digital_Scholarship_Management_System_DDAC.Models.StudentProfile;
+    var notifications = ViewBag.Notifications as IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.Notification>;
 }
 
-<h1>Student Dashboard</h1>
-<p>Signed in as @User.Identity?.Name.</p>
-<p>Build the academic profile, scholarship search/apply, and application tracking here.</p>
+<div class="container mt-4">
+    <!-- Success Alert Banner -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Error Alert Banner -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Notifications Alert Banner -->
+    @if (notifications != null && notifications.Any(n => !n.IsRead))
+    {
+        <div class="card border-info mb-4 shadow-sm">
+            <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-bell-fill me-2"></i>Recent Notifications</h6>
+                <span class="badge bg-dark">@notifications.Count(n => !n.IsRead) Unread</span>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var note in notifications.Take(3))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span>@note.Message</span>
+                            <small class="text-muted d-block"><i class="bi bi-clock me-1"></i>@note.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</small>
+                        </div>
+                        @if (!note.IsRead)
+                        {
+                            <span class="badge bg-warning text-dark">New</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Profile Overview Banner -->
+    <div class="card bg-light mb-4 shadow-sm border-0">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h3 class="card-title text-primary mb-1">Welcome, @profile?.FullName</h3>
+                <p class="mb-0 text-muted">
+                    <strong>CGPA:</strong> @profile?.CurrentCGPA.ToString("0.00") |
+                    <strong>Program:</strong> @(profile?.ProgramOfStudy ?? "Not Set") |
+                    <strong>Institution:</strong> @(profile?.University ?? "Not Set") |
+                    <strong>Household Income:</strong> RM @(profile?.HouseholdIncome?.ToString("N2") ?? "Not Set")
+                </p>
+            </div>
+            <div>
+                <a asp-controller="Student" asp-action="Profile" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-pencil-square me-1"></i>Manage Profile
+                </a>
+                <a asp-controller="Student" asp-action="TrackStatus" class="btn btn-primary">
+                    <i class="bi bi-journal-check me-1"></i>My Applications
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0"><i class="bi bi-stars me-2 text-warning"></i>Matched Scholarships for You</h4>
+        <span class="badge bg-success px-3 py-2">@Model.Count() Matches Found</span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center py-4 shadow-sm">
+            <i class="bi bi-info-circle display-6 d-block mb-2 text-info"></i>
+            <h5>No matching scholarships found at this time.</h5>
+            <p class="mb-0">Please ensure your profile is fully updated with accurate CGPA, program, and income details.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 position-relative">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-1">
+                                <span class="badge bg-primary"><i class="bi bi-building me-1"></i>Verified Provider</span>
+                                <span class="badge bg-success">RM @item.AmountPerRecipient.ToString("N2")</span>
+                            </div>
+
+                            <h5 class="card-title text-primary mt-2">@item.Title</h5>
+                            <p class="card-text text-muted flex-grow-1">@(item.Description ?? "No description provided.")</p>
+
+                            @if (item.ApplicationDeadline.HasValue)
+                            {
+                                <div class="mb-2">
+                                    <small class="text-danger fw-bold">
+                                        <i class="bi bi-calendar-event me-1"></i>Deadline: @item.ApplicationDeadline.Value.ToString("dd MMM yyyy")
+                                    </small>
+                                </div>
+                            }
+
+                            <hr />
+                            <ul class="list-unstyled small text-muted mb-3">
+                                <li class="mb-1"><strong>Min CGPA Required:</strong> @(item.MinCgpa.HasValue ? item.MinCgpa.Value.ToString("0.00") : "None")</li>
+                                <li class="mb-1"><strong>Max Income Limit:</strong> @(item.MaxHouseholdIncome.HasValue ? $"RM {item.MaxHouseholdIncome.Value:N2}" : "No Limit")</li>
+                                <li class="mb-1"><strong>Required Program:</strong> @(string.IsNullOrEmpty(item.RequiredProgram) ? "All Programs" : item.RequiredProgram)</li>
+                                <li class="mb-1"><strong>Available Quota:</strong> @item.Quota recipients</li>
+                            </ul>
+
+                            <a asp-controller="Student" asp-action="Apply" asp-route-scholarshipId="@item.ScholarshipId" class="btn btn-primary w-100 mt-auto">
+                                <i class="bi bi-send me-1"></i>Apply Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

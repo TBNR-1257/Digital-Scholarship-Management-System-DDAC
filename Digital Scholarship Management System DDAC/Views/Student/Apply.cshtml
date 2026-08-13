@@ -1,0 +1,48 @@
+﻿@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ApplicationSubmissionViewModel
+
+@{
+    ViewData["Title"] = "Submit Scholarship Application";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h4 class="mb-0">Scholarship Application</h4>
+        </div>
+        <div class="card-body p-4">
+            <div class="alert alert-secondary mb-4">
+                <small class="text-uppercase text-muted fw-bold d-block">Applying For:</small>
+                <h5 class="mb-0 text-primary">@Model.ScholarshipTitle</h5>
+            </div>
+
+            <form asp-controller="Student" asp-action="SubmitApplication" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ScholarshipId" />
+                <input type="hidden" asp-for="ScholarshipTitle" />
+
+                <div class="mb-3">
+                    <label asp-for="DocumentType" class="form-label fw-bold">Document Type</label>
+                    <select asp-for="DocumentType" class="form-select">
+                        <option value="Transcript">Academic Transcript</option>
+                        <option value="IncomeProof">Proof of Household Income</option>
+                        <option value="Certificate">Co-curricular / Achievement Certificate</option>
+                        <option value="IDCard">National Identity Card / Passport</option>
+                    </select>
+                    <span asp-validation-for="DocumentType" class="text-danger"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="DocumentFile" class="form-label fw-bold">Upload Supporting File (PDF / Image)</label>
+                    <input asp-for="DocumentFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" required />
+                    <span asp-validation-for="DocumentFile" class="text-danger"></span>
+                    <div class="form-text">Accepted formats: .pdf, .jpg, .png (Max file size: 5MB)</div>
+                </div>
+
+                <div class="d-flex justify-content-between pt-2">
+                    <a asp-controller="Student" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success px-4">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

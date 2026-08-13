@@ -81,7 +81,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Areas.Identity.Pages.Accoun
 
             /// <summary>
             ///     Applicant's full name. Public registration is for students only; staff accounts
-            ///     (Admin/Officer/Reviewer) are provisioned separately.
+            ///     (Admin/Moderator/Provider) are provisioned separately.
             /// </summary>
             [Required]
             [Display(Name = "Full Name")]

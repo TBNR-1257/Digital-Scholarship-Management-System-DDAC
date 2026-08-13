@@ -4,6 +4,7 @@ using Digital_Scholarship_Management_System_DDAC.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Digital_Scholarship_Management_System_DDAC.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812195754_SyncStudentModels")]
+    partial class SyncStudentModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,56 +161,6 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
                     b.ToTable("Documents");
                 });
 
-            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.InstitutionProfile", b =>
-                {
-                    b.Property<int>("InstitutionProfileId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("InstitutionProfileId"));
-
-                    b.Property<DateTime?>("ActivatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("ActivatedByUserId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ContactEmail")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ContactPhone")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("InstitutionName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<DateTime?>("ModeratedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("ModeratedByUserId")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("RegistrationDocumentPath")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("VerificationStatus")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("InstitutionProfileId");
-
-                    b.ToTable("InstitutionProfiles");
-                });
-
             modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Notification", b =>
                 {
                     b.Property<int>("NotificationId")
@@ -235,6 +188,38 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Review", b =>
+                {
+                    b.Property<int>("ReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ReviewId"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RecommendedDecision")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReviewerId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("Score")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("ReviewId");
+
+                    b.ToTable("Reviews");
+                });
+
             modelBuilder.Entity("Digital_Scholarship_Management_System_DDAC.Models.Scholarship", b =>
                 {
                     b.Property<int>("ScholarshipId")
@@ -249,9 +234,6 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
                     b.Property<DateTime?>("ApplicationDeadline")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("ApprovedByUserId")
-                        .HasColumnType("longtext");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -259,13 +241,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("DecisionAt")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("InstitutionName")
                         .HasColumnType("longtext");
 
                     b.Property<decimal?>("MaxHouseholdIncome")
@@ -276,9 +252,6 @@ namespace Digital_Scholarship_Management_System_DDAC.Migrations
 
                     b.Property<int>("Quota")
                         .HasColumnType("int");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("RequiredProgram")
                         .HasColumnType("longtext");

@@ -4,7 +4,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Data;
 
 public static class DbSeeder
 {
-    public static readonly string[] Roles = { "Admin", "Officer", "Student", "Reviewer" };
+    public static readonly string[] Roles = { "Admin", "Moderator", "Student", "Provider" };
 
     private const string DemoPassword = "Passw0rd!";
 
@@ -22,9 +22,9 @@ public static class DbSeeder
         }
 
         await EnsureDemoUserAsync(userManager, "admin@ddac.edu", "System Admin", "Admin");
-        await EnsureDemoUserAsync(userManager, "officer@ddac.edu", "Scholarship Officer", "Officer");
+        await EnsureDemoUserAsync(userManager, "officer@ddac.edu", "Scholarship Moderator", "Moderator");
         await EnsureDemoUserAsync(userManager, "student@ddac.edu", "Demo Student", "Student");
-        await EnsureDemoUserAsync(userManager, "reviewer@ddac.edu", "Demo Reviewer", "Reviewer");
+        await EnsureDemoUserAsync(userManager, "reviewer@ddac.edu", "Demo Institution Provider", "Provider");
     }
 
     private static async Task EnsureDemoUserAsync(UserManager<ApplicationUser> userManager, string email, string fullName, string role)

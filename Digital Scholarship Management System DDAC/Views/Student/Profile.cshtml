@@ -1,0 +1,71 @@
+﻿@model Digital_Scholarship_Management_System_DDAC.Models.StudentProfile
+
+@{
+    ViewData["Title"] = "Manage Personal & Academic Profile";
+}
+
+<div class="container mt-4" style="max-width: 850px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h4 class="mb-0">Personal, Academic & Financial Profile</h4>
+        </div>
+        <div class="card-body p-4">
+            <form asp-controller="Student" asp-action="SaveProfile" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="StudentProfileId" />
+                <input type="hidden" asp-for="UserId" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="FullName" class="form-label fw-bold">Full Name</label>
+                        <input asp-for="FullName" class="form-control" placeholder="John Doe" required />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PhoneNumber" class="form-label fw-bold">Phone Number</label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="+60123456789" required />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Nationality" class="form-label fw-bold">Nationality</label>
+                        <input asp-for="Nationality" class="form-control" placeholder="Malaysian" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="University" class="form-label fw-bold">University / Institution</label>
+                        <input asp-for="University" class="form-control" placeholder="Asia Pacific University" required />
+                        <span asp-validation-for="University" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label asp-for="ProgramOfStudy" class="form-label fw-bold">Program / Major of Study</label>
+                        <input asp-for="ProgramOfStudy" class="form-control" placeholder="Computer Science" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="YearOfStudy" class="form-label fw-bold">Year of Study</label>
+                        <input asp-for="YearOfStudy" type="number" min="1" max="6" class="form-control" placeholder="2" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CurrentCGPA" class="form-label fw-bold">Current CGPA</label>
+                        <input asp-for="CurrentCGPA" type="number" step="0.01" min="0.00" max="4.00" class="form-control" placeholder="3.75" required />
+                        <span asp-validation-for="CurrentCGPA" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HouseholdIncome" class="form-label fw-bold">Monthly Household Income (RM)</label>
+                        <input asp-for="HouseholdIncome" type="number" step="0.01" min="0.00" class="form-control" placeholder="4500.00" />
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between">
+                    <a asp-controller="Student" asp-action="Index" class="btn btn-outline-secondary px-4">Back to Dashboard</a>
+                    <button type="submit" class="btn btn-primary px-4">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
