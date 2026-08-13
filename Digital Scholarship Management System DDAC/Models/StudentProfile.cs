@@ -11,8 +11,23 @@ public class StudentProfile
     public string UserId { get; set; } = string.Empty;
 
     public string? ProgramOfStudy { get; set; }
+
     public int? YearOfStudy { get; set; }
-    public decimal? Cgpa { get; set; }
+
     public decimal? HouseholdIncome { get; set; }
+
     public string? Nationality { get; set; }
+
+    [Required, MaxLength(100)]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required, MaxLength(20)]
+    public string PhoneNumber { get; set; } = string.Empty;
+
+    [Required, MaxLength(100)]
+    public string University { get; set; } = string.Empty;
+
+    [Required]
+    public decimal CurrentCGPA { get; set; }
+
 }
