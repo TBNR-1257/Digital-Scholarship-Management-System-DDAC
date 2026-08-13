@@ -1,0 +1,66 @@
+@model Digital_Scholarship_Management_System_DDAC.Models.Scholarship
+
+@{
+    ViewData["Title"] = "Review Listing";
+}
+
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Review Listing</h2>
+        <a asp-action="Listings" class="btn btn-outline-secondary">Back to Queue</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Title</dt>
+                <dd class="col-sm-8">@Model.Title</dd>
+
+                <dt class="col-sm-4">Institution</dt>
+                <dd class="col-sm-8">@(Model.InstitutionName ?? "Unknown")</dd>
+
+                <dt class="col-sm-4">Account Email</dt>
+                <dd class="col-sm-8">@(ViewBag.AccountEmail ?? "Unknown")</dd>
+
+                <dt class="col-sm-4">Description</dt>
+                <dd class="col-sm-8">@(Model.Description ?? "None provided")</dd>
+
+                <dt class="col-sm-4">Min CGPA</dt>
+                <dd class="col-sm-8">@(Model.MinCgpa.HasValue ? Model.MinCgpa.Value.ToString("0.00") : "None")</dd>
+
+                <dt class="col-sm-4">Max Household Income</dt>
+                <dd class="col-sm-8">@(Model.MaxHouseholdIncome.HasValue ? $"RM {Model.MaxHouseholdIncome.Value:N2}" : "No Limit")</dd>
+
+                <dt class="col-sm-4">Required Program</dt>
+                <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.RequiredProgram) ? "All Programs" : Model.RequiredProgram)</dd>
+
+                <dt class="col-sm-4">Quota</dt>
+                <dd class="col-sm-8">@Model.Quota recipients</dd>
+
+                <dt class="col-sm-4">Amount Per Recipient</dt>
+                <dd class="col-sm-8">RM @Model.AmountPerRecipient.ToString("N2")</dd>
+
+                <dt class="col-sm-4">Application Deadline</dt>
+                <dd class="col-sm-8">@(Model.ApplicationDeadline.HasValue ? Model.ApplicationDeadline.Value.ToString("dd MMM yyyy") : "None")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <form asp-action="ApproveListing" method="post">
+                <input type="hidden" name="id" value="@Model.ScholarshipId" />
+                <button type="submit" class="btn btn-success w-100">Approve Listing</button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <form asp-action="RejectListing" method="post">
+                <input type="hidden" name="id" value="@Model.ScholarshipId" />
+                <div class="input-group">
+                    <input type="text" name="rejectionReason" class="form-control" placeholder="Reason for rejection" required />
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

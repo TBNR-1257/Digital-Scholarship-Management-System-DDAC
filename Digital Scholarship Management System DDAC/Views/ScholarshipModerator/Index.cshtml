@@ -2,6 +2,36 @@
     ViewData["Title"] = "Scholarship Moderator Dashboard";
 }
 
-<h1>Scholarship Moderator Dashboard</h1>
-<p>Signed in as @User.Identity?.Name.</p>
-<p>Build institution vetting, scholarship listing approval, and platform-wide listing oversight here.</p>
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <h1 class="mb-1">Scholarship Moderator Dashboard</h1>
+    <p class="text-muted mb-4">Signed in as @User.Identity?.Name</p>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Institutions Awaiting Review</h5>
+                    <p class="display-4 fw-bold text-primary">@ViewBag.PendingInstitutionsCount</p>
+                    <a asp-action="Institutions" class="btn btn-primary">Review Institutions</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Listings Awaiting Approval</h5>
+                    <p class="display-4 fw-bold text-primary">@ViewBag.PendingListingsCount</p>
+                    <a asp-action="Listings" class="btn btn-primary">Review Listings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

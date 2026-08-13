@@ -1,0 +1,60 @@
+@model Digital_Scholarship_Management_System_DDAC.Models.InstitutionProfile
+
+@{
+    ViewData["Title"] = "Review Institution";
+}
+
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Review Institution</h2>
+        <a asp-action="Institutions" class="btn btn-outline-secondary">Back to Queue</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Institution Name</dt>
+                <dd class="col-sm-8">@Model.InstitutionName</dd>
+
+                <dt class="col-sm-4">Account Email</dt>
+                <dd class="col-sm-8">@(ViewBag.AccountEmail ?? "Unknown")</dd>
+
+                <dt class="col-sm-4">Contact Email</dt>
+                <dd class="col-sm-8">@(Model.ContactEmail ?? "Not provided")</dd>
+
+                <dt class="col-sm-4">Contact Phone</dt>
+                <dd class="col-sm-8">@(Model.ContactPhone ?? "Not provided")</dd>
+
+                <dt class="col-sm-4">Registration Document</dt>
+                <dd class="col-sm-8">
+                    @if (!string.IsNullOrEmpty(Model.RegistrationDocumentPath))
+                    {
+                        <a href="@Model.RegistrationDocumentPath" target="_blank">View Document</a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">None uploaded</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <form asp-action="ApproveInstitution" method="post">
+                <input type="hidden" name="id" value="@Model.InstitutionProfileId" />
+                <button type="submit" class="btn btn-success w-100">Approve Institution</button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <form asp-action="RejectInstitution" method="post">
+                <input type="hidden" name="id" value="@Model.InstitutionProfileId" />
+                <div class="input-group">
+                    <input type="text" name="rejectionReason" class="form-control" placeholder="Reason for rejection" required />
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
