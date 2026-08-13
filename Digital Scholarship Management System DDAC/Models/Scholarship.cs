@@ -10,6 +10,7 @@ public class Scholarship
     [Required]
     public string Title { get; set; } = string.Empty;
 
+    public string? InstitutionName { get; set; }
     public string? Description { get; set; }
     public decimal? MinCgpa { get; set; }
     public decimal? MaxHouseholdIncome { get; set; }
@@ -18,11 +19,16 @@ public class Scholarship
     public decimal AmountPerRecipient { get; set; }
     public DateTime? ApplicationDeadline { get; set; }
 
-    // "Open" or "Closed"
-    public string Status { get; set; } = "Open";
+    // Status lifecycle: "Pending", "Open", "Rejected", "Closed"
+    public string Status { get; set; } = "Pending";
 
     [Required]
-    public string CreatedByUserId { get; set; } = string.Empty;
+    public string CreatedByUserId { get; set; } = string.Empty; // Shamel's User ID
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Optional Admin/Moderator Audit Tracking Fields
+    public string? ApprovedByUserId { get; set; } // Bryan's User ID
+    public DateTime? DecisionAt { get; set; }
+    public string? RejectionReason { get; set; }
 }

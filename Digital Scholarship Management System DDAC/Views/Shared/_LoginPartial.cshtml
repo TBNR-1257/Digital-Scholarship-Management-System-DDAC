@@ -13,17 +13,17 @@
     {
         <li class="nav-item"><a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Dashboard</a></li>
     }
-    else if (User.IsInRole("Officer"))
+    else if (User.IsInRole("Moderator"))
     {
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="ScholarshipOfficer" asp-action="Index">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" asp-controller="ScholarshipModerator" asp-action="Index">Dashboard</a></li>
     }
     else if (User.IsInRole("Student"))
     {
         <li class="nav-item"><a class="nav-link text-dark" asp-controller="Student" asp-action="Index">Dashboard</a></li>
     }
-    else if (User.IsInRole("Reviewer"))
+    else if (User.IsInRole("Provider"))
     {
-        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Reviewer" asp-action="Index">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" asp-controller="Provider" asp-action="Index">Dashboard</a></li>
     }
     <li class="nav-item">
         <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">

@@ -20,7 +20,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             _environment = environment;
         }
 
-        // DASHBOARD & SCHOLARSHIP 
+        // 1. DASHBOARD & AUTOMATED SCHOLARSHIP MATCHING
         public async Task<IActionResult> Index()
         {
             string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -33,9 +33,10 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
                 return RedirectToAction(nameof(Profile));
             }
 
-            // Automated Scholarship Matching
+            // Automated Matching Engine: Filters for APPROVED/OPEN listings and active deadlines
             var matchedScholarships = await _context.Scholarships
-                .Where(s => s.Status == "Open" &&
+                .Where(s => (s.Status == "Open" || s.Status == "Approved") &&
+                            (s.ApplicationDeadline == null || s.ApplicationDeadline >= DateTime.UtcNow) &&
                             (s.MinCgpa == null || profile.CurrentCGPA >= s.MinCgpa) &&
                             (s.MaxHouseholdIncome == null || profile.HouseholdIncome == null || profile.HouseholdIncome <= s.MaxHouseholdIncome) &&
                             (string.IsNullOrEmpty(s.RequiredProgram) || s.RequiredProgram == "All" || s.RequiredProgram == profile.ProgramOfStudy))
@@ -102,7 +103,9 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var scholarship = await _context.Scholarships.FindAsync(scholarshipId);
-            if (scholarship == null || scholarship.Status != "Open") return NotFound();
+
+            if (scholarship == null || (scholarship.Status != "Open" && scholarship.Status != "Approved"))
+                return NotFound();
 
             // Prevent direct URL access if already applied
             bool hasAlreadyApplied = await _context.Applications
@@ -201,6 +204,8 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
                 return RedirectToAction(nameof(TrackStatus));
             }
 
+            // FIXED: Re-populate ScholarshipTitle so the view doesn't render an empty heading
+            model.ScholarshipTitle = scholarship.Title;
             ModelState.AddModelError("", "Please select a document to upload.");
             return View("Apply", model);
         }
