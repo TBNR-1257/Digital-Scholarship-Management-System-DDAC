@@ -311,5 +311,45 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             TempData["SuccessMessage"] = $"Your application for '{scholarshipTitle}' and all submitted documents have been withdrawn.";
             return RedirectToAction(nameof(TrackStatus));
         }
+
+        // DELETE A SINGLE NOTIFICATION
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteNotification(int notificationId)
+        {
+            string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == currentUserId);
+
+            if (notification != null)
+            {
+                _context.Notifications.Remove(notification);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // CLEAR ALL NOTIFICATIONS
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearAllNotifications()
+        {
+            string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var userNotifications = await _context.Notifications
+                .Where(n => n.UserId == currentUserId)
+                .ToListAsync();
+
+            if (userNotifications.Any())
+            {
+                _context.Notifications.RemoveRange(userNotifications);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "All notifications cleared.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

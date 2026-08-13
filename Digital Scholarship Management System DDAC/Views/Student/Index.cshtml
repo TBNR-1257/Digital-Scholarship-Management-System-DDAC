@@ -26,25 +26,50 @@
     }
 
     <!-- Notifications Alert Banner -->
-    @if (notifications != null && notifications.Any(n => !n.IsRead))
+    @if (notifications != null && notifications.Any())
     {
         <div class="card border-info mb-4 shadow-sm">
             <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-bold"><i class="bi bi-bell-fill me-2"></i>Recent Notifications</h6>
-                <span class="badge bg-dark">@notifications.Count(n => !n.IsRead) Unread</span>
+                <div class="d-flex align-items-center gap-2">
+                    @if (notifications.Any(n => !n.IsRead))
+                    {
+                        <span class="badge bg-dark">@notifications.Count(n => !n.IsRead) Unread</span>
+                    }
+
+                    <!-- Clear All Button -->
+                    <form asp-controller="Student" asp-action="ClearAllNotifications" method="post" class="d-inline"
+                          onsubmit="return confirm('Are you sure you want to clear all notifications?');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-dark py-0 px-2 fw-semibold">
+                            <i class="bi bi-trash3 me-1"></i>Clear All
+                        </button>
+                    </form>
+                </div>
             </div>
             <ul class="list-group list-group-flush">
-                @foreach (var note in notifications.Take(3))
+                @foreach (var note in notifications)
                 {
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <span>@note.Message</span>
+                        <div class="me-3">
+                            <span class="@(!note.IsRead ? "fw-bold" : "")">@note.Message</span>
                             <small class="text-muted d-block"><i class="bi bi-clock me-1"></i>@note.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</small>
                         </div>
-                        @if (!note.IsRead)
-                        {
-                            <span class="badge bg-warning text-dark">New</span>
-                        }
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!note.IsRead)
+                            {
+                                <span class="badge bg-warning text-dark">New</span>
+                            }
+
+                            <!-- Individual Dismiss Button -->
+                            <form asp-controller="Student" asp-action="DeleteNotification" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="notificationId" value="@note.NotificationId" />
+                                <button type="submit" class="btn btn-sm btn-link text-secondary p-0 ms-1" title="Dismiss notification">
+                                    <i class="bi bi-x-circle-fill fs-6 text-danger opacity-75"></i>
+                                </button>
+                            </form>
+                        </div>
                     </li>
                 }
             </ul>
