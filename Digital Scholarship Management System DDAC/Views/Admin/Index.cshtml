@@ -2,6 +2,19 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<h1>Admin Dashboard</h1>
-<p>Signed in as @User.Identity?.Name.</p>
-<p>Build user account management, system usage monitoring, and reporting here.</p>
+<div class="container mt-4">
+    <h1>Admin Dashboard</h1>
+    <p>Signed in as @User.Identity?.Name.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-people-fill me-2"></i>Users &amp; Roles</h5>
+                    <p class="card-text">Manage user accounts, assign roles, and enable or disable access.</p>
+                    <a asp-controller="Admin" asp-action="Users" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
