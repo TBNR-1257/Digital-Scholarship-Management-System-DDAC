@@ -1,8 +1,10 @@
 using Digital_Scholarship_Management_System_DDAC.Data;
+using Digital_Scholarship_Management_System_DDAC.Models;
 using Digital_Scholarship_Management_System_DDAC.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Digital_Scholarship_Management_System_DDAC.Controllers;
 
@@ -11,11 +13,13 @@ public class AdminController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly ApplicationDbContext _context;
 
-    public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _context = context;
     }
 
     public IActionResult Index()
@@ -146,5 +150,176 @@ public class AdminController : Controller
         }
 
         return RedirectToAction(nameof(Users));
+    }
+
+    // ---- Scholarship Categories ----
+
+    public async Task<IActionResult> Categories()
+    {
+        var categories = await _context.ScholarshipCategories.OrderBy(c => c.Name).ToListAsync();
+        return View(categories);
+    }
+
+    public IActionResult CreateCategory()
+    {
+        return View("CategoryForm", new CategoryInputViewModel());
+    }
+
+    public async Task<IActionResult> EditCategory(int id)
+    {
+        var category = await _context.ScholarshipCategories.FindAsync(id);
+        if (category == null)
+        {
+            return NotFound();
+        }
+
+        var model = new CategoryInputViewModel
+        {
+            Id = category.ScholarshipCategoryId,
+            Name = category.Name,
+            Description = category.Description
+        };
+
+        return View("CategoryForm", model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CategoryForm(CategoryInputViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        if (model.Id == 0)
+        {
+            _context.ScholarshipCategories.Add(new ScholarshipCategory
+            {
+                Name = model.Name,
+                Description = model.Description
+            });
+            TempData["StatusMessage"] = $"Category \"{model.Name}\" was created.";
+        }
+        else
+        {
+            var category = await _context.ScholarshipCategories.FindAsync(model.Id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            category.Name = model.Name;
+            category.Description = model.Description;
+            TempData["StatusMessage"] = $"Category \"{model.Name}\" was updated.";
+        }
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Categories));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCategory(int id)
+    {
+        var category = await _context.ScholarshipCategories.FindAsync(id);
+        if (category == null)
+        {
+            return NotFound();
+        }
+
+        _context.ScholarshipCategories.Remove(category);
+        await _context.SaveChangesAsync();
+
+        TempData["StatusMessage"] = $"Category \"{category.Name}\" was deleted.";
+        return RedirectToAction(nameof(Categories));
+    }
+
+    // ---- Notification Templates ----
+
+    public async Task<IActionResult> NotificationTemplates()
+    {
+        var templates = await _context.NotificationTemplates.OrderBy(t => t.Name).ToListAsync();
+        return View(templates);
+    }
+
+    public IActionResult CreateNotificationTemplate()
+    {
+        return View("NotificationTemplateForm", new NotificationTemplateInputViewModel());
+    }
+
+    public async Task<IActionResult> EditNotificationTemplate(int id)
+    {
+        var template = await _context.NotificationTemplates.FindAsync(id);
+        if (template == null)
+        {
+            return NotFound();
+        }
+
+        var model = new NotificationTemplateInputViewModel
+        {
+            Id = template.NotificationTemplateId,
+            Name = template.Name,
+            Subject = template.Subject,
+            Body = template.Body
+        };
+
+        return View("NotificationTemplateForm", model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> NotificationTemplateForm(NotificationTemplateInputViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        if (model.Id == 0)
+        {
+            _context.NotificationTemplates.Add(new NotificationTemplate
+            {
+                Name = model.Name,
+                Subject = model.Subject,
+                Body = model.Body,
+                UpdatedAt = DateTime.UtcNow
+            });
+            TempData["StatusMessage"] = $"Notification template \"{model.Name}\" was created.";
+        }
+        else
+        {
+            var template = await _context.NotificationTemplates.FindAsync(model.Id);
+            if (template == null)
+            {
+                return NotFound();
+            }
+
+            template.Name = model.Name;
+            template.Subject = model.Subject;
+            template.Body = model.Body;
+            template.UpdatedAt = DateTime.UtcNow;
+            TempData["StatusMessage"] = $"Notification template \"{model.Name}\" was updated.";
+        }
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(NotificationTemplates));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteNotificationTemplate(int id)
+    {
+        var template = await _context.NotificationTemplates.FindAsync(id);
+        if (template == null)
+        {
+            return NotFound();
+        }
+
+        _context.NotificationTemplates.Remove(template);
+        await _context.SaveChangesAsync();
+
+        TempData["StatusMessage"] = $"Notification template \"{template.Name}\" was deleted.";
+        return RedirectToAction(nameof(NotificationTemplates));
     }
 }
