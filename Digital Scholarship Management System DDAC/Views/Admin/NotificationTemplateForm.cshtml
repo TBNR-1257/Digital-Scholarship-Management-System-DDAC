@@ -1,0 +1,41 @@
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.NotificationTemplateInputViewModel
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Add Notification Template" : "Edit Notification Template";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <div class="card shadow-sm border-0" style="max-width: 600px;">
+        <div class="card-body">
+            <form asp-controller="Admin" asp-action="NotificationTemplateForm" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. Application Approved" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label"></label>
+                    <input asp-for="Subject" class="form-control" placeholder="e.g. Your application has been approved" />
+                    <span asp-validation-for="Subject" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Body" class="form-label"></label>
+                    <textarea asp-for="Body" class="form-control" rows="6" placeholder="Message body shown to the recipient"></textarea>
+                    <span asp-validation-for="Body" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a asp-controller="Admin" asp-action="NotificationTemplates" class="btn btn-outline-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

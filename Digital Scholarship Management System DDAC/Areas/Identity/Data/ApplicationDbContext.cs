@@ -18,6 +18,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Application> Applications { get; set; } = null!;
     public DbSet<Document> Documents { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
+    public DbSet<ScholarshipCategory> ScholarshipCategories { get; set; } = null!;
+    public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
