@@ -249,5 +249,67 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             }
             return Ok();
         }
+
+        // 5. WITHDRAW / DELETE APPLICATION (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> WithdrawApplication(int applicationId)
+        {
+            string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            // 1. Fetch application & verify ownership (security check)
+            var application = await _context.Applications
+                .FirstOrDefaultAsync(a => a.ApplicationId == applicationId && a.StudentId == currentUserId);
+
+            if (application == null)
+            {
+                TempData["ErrorMessage"] = "Application not found or access denied.";
+                return RedirectToAction(nameof(TrackStatus));
+            }
+
+            // Optional: Fetch scholarship details for notification text
+            var scholarship = await _context.Scholarships.FindAsync(application.ScholarshipId);
+            string scholarshipTitle = scholarship?.Title ?? "Scholarship";
+
+            // 2. Fetch associated documents
+            var documents = await _context.Documents
+                .Where(d => d.ApplicationId == applicationId)
+                .ToListAsync();
+
+            // 3. Delete physical files from wwwroot/uploads
+            foreach (var doc in documents)
+            {
+                if (!string.IsNullOrEmpty(doc.FilePath))
+                {
+                    // Convert relative path ("/uploads/file.pdf") to physical path
+                    string relativePath = doc.FilePath.TrimStart('/', '\\');
+                    string physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+                    if (System.IO.File.Exists(physicalPath))
+                    {
+                        System.IO.File.Delete(physicalPath);
+                    }
+                }
+            }
+
+            // 4. Remove database records
+            _context.Documents.RemoveRange(documents);
+            _context.Applications.Remove(application);
+
+            // 5. Create automated withdrawal notification
+            var notification = new Notification
+            {
+                UserId = currentUserId,
+                Message = $"Your application for '{scholarshipTitle}' has been successfully withdrawn.",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Notifications.Add(notification);
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Your application for '{scholarshipTitle}' and all submitted documents have been withdrawn.";
+            return RedirectToAction(nameof(TrackStatus));
+        }
     }
 }
