@@ -1,7 +1,88 @@
+@model IEnumerable<Scholarship>
 @{
-    ViewData["Title"] = "Institution Provider Dashboard";
+    ViewData["Title"] = "Provider Dashboard";
+    var institution = ViewBag.Institution as InstitutionProfile;
 }
 
-<h1>Institution Provider Dashboard</h1>
-<p>Signed in as @User.Identity?.Name.</p>
-<p>Build institution registration, scholarship listing creation, and application management here.</p>
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">@institution!.InstitutionName</h5>
+        <p class="card-text">
+            Verification status:
+            <span class="badge bg-@(institution.VerificationStatus == "Active" ? "success" : institution.VerificationStatus == "Rejected" ? "danger" : "warning")">
+                @institution.VerificationStatus
+            </span>
+        </p>
+        @if (institution.VerificationStatus == "Rejected" && !string.IsNullOrEmpty(institution.RejectionReason))
+        {
+            <p class="text-danger">Reason: @institution.RejectionReason</p>
+        }
+    </div>
+</div>
+
+@if (institution.VerificationStatus == "Active")
+{
+    <p><a asp-action="CreateScholarship" class="btn btn-primary">+ Create New Scholarship Listing</a></p>
+}
+else
+{
+    <p class="text-muted">You can create scholarship listings once your institution is verified and activated.</p>
+}
+
+<h3>My Scholarship Listings</h3>
+
+@if (!Model.Any())
+{
+    <p>You haven't created any scholarships yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Quota</th>
+                <th>Amount</th>
+                <th>Deadline</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.Title</td>
+                    <td>
+                        <span class="badge bg-@(s.Status == "Open" ? "success" : s.Status == "Rejected" ? "danger" : s.Status == "Closed" ? "secondary" : "warning")">
+                            @s.Status
+                        </span>
+                    </td>
+                    <td>@s.Quota</td>
+                    <td>RM @s.AmountPerRecipient</td>
+                    <td>@(s.ApplicationDeadline?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Applications" asp-route-scholarshipId="@s.ScholarshipId">View Applications</a>
+                    </td>
+                </tr>
+                @if (s.Status == "Rejected" && !string.IsNullOrEmpty(s.RejectionReason))
+                {
+                    <tr>
+                        <td colspan="6" class="text-danger">Rejection reason: @s.RejectionReason</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,63 @@
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ScholarshipCreateViewModel
+
+@{
+    ViewData["Title"] = "Create Scholarship Listing";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form asp-action="CreateScholarship" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 form-group mb-3">
+            <label asp-for="MinCgpa" class="form-label"></label>
+            <input asp-for="MinCgpa" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="MinCgpa" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 form-group mb-3">
+            <label asp-for="MaxHouseholdIncome" class="form-label"></label>
+            <input asp-for="MaxHouseholdIncome" class="form-control" type="number" step="0.01" />
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="RequiredProgram" class="form-label"></label>
+        <input asp-for="RequiredProgram" class="form-control" />
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 form-group mb-3">
+            <label asp-for="Quota" class="form-label"></label>
+            <input asp-for="Quota" class="form-control" type="number" />
+            <span asp-validation-for="Quota" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 form-group mb-3">
+            <label asp-for="AmountPerRecipient" class="form-label"></label>
+            <input asp-for="AmountPerRecipient" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="AmountPerRecipient" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 form-group mb-3">
+            <label asp-for="ApplicationDeadline" class="form-label"></label>
+            <input asp-for="ApplicationDeadline" class="form-control" type="date" />
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit for Approval</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

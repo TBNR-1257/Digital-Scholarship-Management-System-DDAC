@@ -1,0 +1,79 @@
+@model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ApplicationReviewViewModel>
+
+@{
+    ViewData["Title"] = $"Applications - {ViewBag.ScholarshipTitle}";
+}
+
+<h1>Applications for "@ViewBag.ScholarshipTitle"</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<p><a asp-action="Index">Back to dashboard</a></p>
+
+@if (!Model.Any())
+{
+    <p>No applications submitted yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Submitted</th>
+                <th>Document</th>
+                <th>Status</th>
+                <th>Decision</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var app in Model)
+            {
+                <tr>
+                    <td>@app.StudentName <br /><small class="text-muted">@app.StudentEmail</small></td>
+                    <td>@(app.SubmittedAt?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(app.DocumentPath))
+                        {
+                            <a href="@app.DocumentPath" target="_blank">@app.DocumentType: @app.DocumentFileName</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No document</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="badge bg-@(app.Status == "Approved" ? "success" : app.Status == "Rejected" ? "danger" : "warning")">
+                            @app.Status
+                        </span>
+                    </td>
+                    <td>
+                        @if (app.Status == "Submitted" || app.Status == "UnderReview")
+                        {
+                            <form asp-action="Decide" method="post" class="d-flex gap-2 align-items-center">
+                                <input type="hidden" name="applicationId" value="@app.ApplicationId" />
+                                <input type="text" name="reason" class="form-control form-control-sm" placeholder="Reason (required if rejecting)" style="width: 220px;" />
+                                <button type="submit" name="decision" value="Approved" class="btn btn-sm btn-success">Approve</button>
+                                <button type="submit" name="decision" value="Rejected" class="btn btn-sm btn-danger"
+                                        onclick="var f=this.form; var r=f.querySelector('[name=reason]'); if(!r.value.trim()){ alert('Please enter a reason for rejecting this application.'); r.focus(); return false; }">
+                                    Reject
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Decided</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
