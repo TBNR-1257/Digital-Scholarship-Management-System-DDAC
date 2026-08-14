@@ -1,7 +1,9 @@
 @model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.Scholarship>
 
 @{
-    ViewData["Title"] = "Listing Approval Queue";
+    ViewData["Title"] = "Scholarship Listings";
+    string? search = ViewBag.Search;
+    string? statusFilter = ViewBag.StatusFilter;
 }
 
 <div class="container mt-4">
@@ -14,14 +16,44 @@
     }
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Listing Approval Queue</h2>
+        <h2 class="mb-0">Scholarship Listings</h2>
         <a asp-action="Index" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-action="Listings" method="get" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">Search by title or institution</label>
+                    <input type="text" name="search" value="@search" class="form-control" placeholder="e.g. Excellence Award" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="statusFilter" class="form-select">
+                        <option value="" selected="@(string.IsNullOrEmpty(statusFilter))">All</option>
+                        <option value="Pending" selected="@(statusFilter == "Pending")">Pending Approval</option>
+                        <option value="Open" selected="@(statusFilter == "Open")">Approved &ndash; Open</option>
+                        <option value="Closed" selected="@(statusFilter == "Closed")">Closed</option>
+                        <option value="Rejected" selected="@(statusFilter == "Rejected")">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-search me-1"></i>Filter
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(statusFilter))
+                    {
+                        <a asp-action="Listings" class="btn btn-outline-secondary">Clear</a>
+                    }
+                </div>
+            </form>
+        </div>
     </div>
 
     @if (!Model.Any())
     {
         <div class="alert alert-info text-center py-4 shadow-sm">
-            <h5>No scholarship listings awaiting approval.</h5>
+            <h5>No listings match your search.</h5>
         </div>
     }
     else
@@ -36,6 +68,7 @@
                                 <th>Institution</th>
                                 <th>Quota</th>
                                 <th>Deadline</th>
+                                <th>Status</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -48,7 +81,29 @@
                                     <td>@item.Quota</td>
                                     <td>@(item.ApplicationDeadline.HasValue ? item.ApplicationDeadline.Value.ToString("dd MMM yyyy") : "None")</td>
                                     <td>
-                                        <a asp-action="ListingDetails" asp-route-id="@item.ScholarshipId" class="btn btn-sm btn-primary">Review</a>
+                                        @switch (item.Status)
+                                        {
+                                            case "Pending":
+                                                <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+                                                break;
+                                            case "Open":
+                                                <span class="badge bg-success px-3 py-2">Open</span>
+                                                break;
+                                            case "Closed":
+                                                <span class="badge bg-secondary px-3 py-2">Closed</span>
+                                                break;
+                                            case "Rejected":
+                                                <span class="badge bg-danger px-3 py-2">Rejected</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary px-3 py-2">@item.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-action="ListingDetails" asp-route-id="@item.ScholarshipId" class="btn btn-sm btn-primary">
+                                            @(item.Status == "Pending" ? "Review" : "View")
+                                        </a>
                                     </td>
                                 </tr>
                             }

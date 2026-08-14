@@ -21,7 +21,7 @@ public static class DbSeeder
             }
         }
 
-        await EnsureDemoUserAsync(userManager, "admin@ddac.edu", "System Admin", "Admin");
+        await EnsureDemoUserAsync(userManager, "admin@ddac.edu", "System Admin", "Admin"); 
         await EnsureDemoUserAsync(userManager, "officer@ddac.edu", "Scholarship Moderator", "Moderator");
         await EnsureDemoUserAsync(userManager, "student@ddac.edu", "Demo Student", "Student");
         await EnsureDemoUserAsync(userManager, "reviewer@ddac.edu", "Demo Institution Provider", "Provider");

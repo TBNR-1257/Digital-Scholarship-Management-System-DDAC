@@ -6,8 +6,8 @@
 
 <div class="container mt-4" style="max-width: 700px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Review Institution</h2>
-        <a asp-action="Institutions" class="btn btn-outline-secondary">Back to Queue</a>
+        <h2 class="mb-0">Institution Details</h2>
+        <a asp-action="Institutions" class="btn btn-outline-secondary">Back to List</a>
     </div>
 
     <div class="card shadow-sm border-0 mb-4">
@@ -36,25 +36,65 @@
                         <span class="text-muted">None uploaded</span>
                     }
                 </dd>
+
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                    @switch (Model.VerificationStatus)
+                    {
+                        case "PendingModeratorReview":
+                            <span class="badge bg-warning text-dark px-3 py-2">Pending Review</span>
+                            break;
+                        case "PendingAdminActivation":
+                            <span class="badge bg-info text-dark px-3 py-2">Approved &ndash; Awaiting Admin</span>
+                            break;
+                        case "Active":
+                            <span class="badge bg-success px-3 py-2">Active</span>
+                            break;
+                        case "Rejected":
+                            <span class="badge bg-danger px-3 py-2">Rejected</span>
+                            break;
+                    }
+                </dd>
+
+                @if (Model.ModeratedAt.HasValue)
+                {
+                    <dt class="col-sm-4">Reviewed At</dt>
+                    <dd class="col-sm-8">@Model.ModeratedAt.Value.ToString("dd MMM yyyy, hh:mm tt")</dd>
+                }
+
+                @if (Model.VerificationStatus == "Rejected" && !string.IsNullOrEmpty(Model.RejectionReason))
+                {
+                    <dt class="col-sm-4">Rejection Reason</dt>
+                    <dd class="col-sm-8 text-danger">@Model.RejectionReason</dd>
+                }
             </dl>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <form asp-action="ApproveInstitution" method="post">
-                <input type="hidden" name="id" value="@Model.InstitutionProfileId" />
-                <button type="submit" class="btn btn-success w-100">Approve Institution</button>
-            </form>
+    @if (Model.VerificationStatus == "PendingModeratorReview")
+    {
+        <div class="row g-3">
+            <div class="col-md-6">
+                <form asp-action="ApproveInstitution" method="post">
+                    <input type="hidden" name="id" value="@Model.InstitutionProfileId" />
+                    <button type="submit" class="btn btn-success w-100">Approve Institution</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form asp-action="RejectInstitution" method="post">
+                    <input type="hidden" name="id" value="@Model.InstitutionProfileId" />
+                    <div class="input-group">
+                        <input type="text" name="rejectionReason" class="form-control" placeholder="Reason for rejection" required />
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="col-md-6">
-            <form asp-action="RejectInstitution" method="post">
-                <input type="hidden" name="id" value="@Model.InstitutionProfileId" />
-                <div class="input-group">
-                    <input type="text" name="rejectionReason" class="form-control" placeholder="Reason for rejection" required />
-                    <button type="submit" class="btn btn-danger">Reject</button>
-                </div>
-            </form>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            This institution has already been reviewed. No further action is available here.
         </div>
-    </div>
+    }
 </div>

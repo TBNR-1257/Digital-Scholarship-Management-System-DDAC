@@ -18,18 +18,30 @@
         <div class="col-md-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
-                    <h5 class="card-title">Institutions Awaiting Review</h5>
-                    <p class="display-4 fw-bold text-primary">@ViewBag.PendingInstitutionsCount</p>
-                    <a asp-action="Institutions" class="btn btn-primary">Review Institutions</a>
+                    <h5 class="card-title">Institutions</h5>
+                    <p class="display-4 fw-bold text-primary mb-0">@ViewBag.PendingInstitutionsCount</p>
+                    <p class="text-muted mb-3">awaiting review</p>
+                    <p class="small text-muted mb-3">
+                        <span class="text-success fw-bold">@ViewBag.ApprovedInstitutionsCount</span> approved &middot;
+                        <span class="text-danger fw-bold">@ViewBag.RejectedInstitutionsCount</span> rejected
+                    </p>
+                    <a asp-action="Institutions" asp-route-statusFilter="PendingModeratorReview" class="btn btn-primary">Review Pending</a>
+                    <a asp-action="Institutions" class="btn btn-outline-secondary">View All / Search</a>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
-                    <h5 class="card-title">Listings Awaiting Approval</h5>
-                    <p class="display-4 fw-bold text-primary">@ViewBag.PendingListingsCount</p>
-                    <a asp-action="Listings" class="btn btn-primary">Review Listings</a>
+                    <h5 class="card-title">Scholarship Listings</h5>
+                    <p class="display-4 fw-bold text-primary mb-0">@ViewBag.PendingListingsCount</p>
+                    <p class="text-muted mb-3">awaiting approval</p>
+                    <p class="small text-muted mb-3">
+                        <span class="text-success fw-bold">@ViewBag.ApprovedListingsCount</span> approved &middot;
+                        <span class="text-danger fw-bold">@ViewBag.RejectedListingsCount</span> rejected
+                    </p>
+                    <a asp-action="Listings" asp-route-statusFilter="Pending" class="btn btn-primary">Review Pending</a>
+                    <a asp-action="Listings" class="btn btn-outline-secondary">View All / Search</a>
                 </div>
             </div>
         </div>
