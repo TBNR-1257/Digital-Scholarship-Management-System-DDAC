@@ -1,13 +1,15 @@
-@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ScholarshipCreateViewModel
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ScholarshipEditViewModel
 
 @{
-    ViewData["Title"] = "Create Scholarship Listing";
+    ViewData["Title"] = "Edit Scholarship Listing";
 }
 
 <h1>@ViewData["Title"]</h1>
+<p class="text-muted">Editing a rejected listing will resubmit it to the moderator for a fresh review.</p>
 
-<form asp-action="CreateScholarship" method="post">
+<form asp-action="EditScholarship" asp-route-id="@Model.ScholarshipId" method="post">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="ScholarshipId" />
 
     <div class="form-group mb-3">
         <label asp-for="Title" class="form-label"></label>
@@ -61,7 +63,7 @@
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary">Submit for Approval</button>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
 </form>
 
