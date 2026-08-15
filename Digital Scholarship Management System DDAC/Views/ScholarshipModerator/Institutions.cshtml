@@ -1,7 +1,9 @@
 @model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.InstitutionProfile>
 
 @{
-    ViewData["Title"] = "Institution Vetting Queue";
+    ViewData["Title"] = "Institutions";
+    string? search = ViewBag.Search;
+    string? statusFilter = ViewBag.StatusFilter;
 }
 
 <div class="container mt-4">
@@ -14,14 +16,44 @@
     }
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Institution Vetting Queue</h2>
+        <h2 class="mb-0">Institutions</h2>
         <a asp-action="Index" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form asp-action="Institutions" method="get" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">Search by institution name or contact email</label>
+                    <input type="text" name="search" value="@search" class="form-control" placeholder="e.g. Test University" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="statusFilter" class="form-select">
+                        <option value="" selected="@(string.IsNullOrEmpty(statusFilter))">All</option>
+                        <option value="PendingModeratorReview" selected="@(statusFilter == "PendingModeratorReview")">Pending Review</option>
+                        <option value="PendingAdminActivation" selected="@(statusFilter == "PendingAdminActivation")">Approved &ndash; Awaiting Admin</option>
+                        <option value="Active" selected="@(statusFilter == "Active")">Active</option>
+                        <option value="Rejected" selected="@(statusFilter == "Rejected")">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-search me-1"></i>Filter
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(search) || !string.IsNullOrWhiteSpace(statusFilter))
+                    {
+                        <a asp-action="Institutions" class="btn btn-outline-secondary">Clear</a>
+                    }
+                </div>
+            </form>
+        </div>
     </div>
 
     @if (!Model.Any())
     {
         <div class="alert alert-info text-center py-4 shadow-sm">
-            <h5>No institutions awaiting review.</h5>
+            <h5>No institutions match your search.</h5>
         </div>
     }
     else
@@ -34,6 +66,7 @@
                             <tr>
                                 <th>Institution Name</th>
                                 <th>Contact Email</th>
+                                <th>Status</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -44,7 +77,29 @@
                                     <td class="fw-bold">@item.InstitutionName</td>
                                     <td>@(item.ContactEmail ?? "Not provided")</td>
                                     <td>
-                                        <a asp-action="InstitutionDetails" asp-route-id="@item.InstitutionProfileId" class="btn btn-sm btn-primary">Review</a>
+                                        @switch (item.VerificationStatus)
+                                        {
+                                            case "PendingModeratorReview":
+                                                <span class="badge bg-warning text-dark px-3 py-2">Pending Review</span>
+                                                break;
+                                            case "PendingAdminActivation":
+                                                <span class="badge bg-info text-dark px-3 py-2">Approved &ndash; Awaiting Admin</span>
+                                                break;
+                                            case "Active":
+                                                <span class="badge bg-success px-3 py-2">Active</span>
+                                                break;
+                                            case "Rejected":
+                                                <span class="badge bg-danger px-3 py-2">Rejected</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary px-3 py-2">@item.VerificationStatus</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-action="InstitutionDetails" asp-route-id="@item.InstitutionProfileId" class="btn btn-sm btn-primary">
+                                            @(item.VerificationStatus == "PendingModeratorReview" ? "Review" : "View")
+                                        </a>
                                     </td>
                                 </tr>
                             }

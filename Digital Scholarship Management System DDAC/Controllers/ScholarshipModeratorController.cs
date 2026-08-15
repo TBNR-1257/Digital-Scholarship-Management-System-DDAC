@@ -21,23 +21,46 @@ public class ScholarshipModeratorController : Controller
     {
         ViewBag.PendingInstitutionsCount = await _context.InstitutionProfiles
             .CountAsync(i => i.VerificationStatus == "PendingModeratorReview");
+        ViewBag.ApprovedInstitutionsCount = await _context.InstitutionProfiles
+            .CountAsync(i => i.VerificationStatus == "PendingAdminActivation" || i.VerificationStatus == "Active");
+        ViewBag.RejectedInstitutionsCount = await _context.InstitutionProfiles
+            .CountAsync(i => i.VerificationStatus == "Rejected");
 
         ViewBag.PendingListingsCount = await _context.Scholarships
             .CountAsync(s => s.Status == "Pending");
+        ViewBag.ApprovedListingsCount = await _context.Scholarships
+            .CountAsync(s => s.Status == "Open" || s.Status == "Closed");
+        ViewBag.RejectedListingsCount = await _context.Scholarships
+            .CountAsync(s => s.Status == "Rejected");
 
         return View();
     }
 
     // ============ INSTITUTION VETTING ============
 
-    public async Task<IActionResult> Institutions()
+    public async Task<IActionResult> Institutions(string? search, string? statusFilter)
     {
-        var pending = await _context.InstitutionProfiles
-            .Where(i => i.VerificationStatus == "PendingModeratorReview")
-            .OrderBy(i => i.InstitutionName)
+        var query = _context.InstitutionProfiles.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            query = query.Where(i => i.VerificationStatus == statusFilter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(i => i.InstitutionName.Contains(search)
+                || (i.ContactEmail != null && i.ContactEmail.Contains(search)));
+        }
+
+        var institutions = await query
+            .OrderBy(i => i.VerificationStatus == "PendingModeratorReview" ? 0 : 1)
+            .ThenBy(i => i.InstitutionName)
             .ToListAsync();
 
-        return View(pending);
+        ViewBag.Search = search;
+        ViewBag.StatusFilter = statusFilter;
+        return View(institutions);
     }
 
     public async Task<IActionResult> InstitutionDetails(int id)
@@ -88,14 +111,29 @@ public class ScholarshipModeratorController : Controller
 
     // ============ SCHOLARSHIP LISTING MODERATION ============
 
-    public async Task<IActionResult> Listings()
+    public async Task<IActionResult> Listings(string? search, string? statusFilter)
     {
-        var pending = await _context.Scholarships
-            .Where(s => s.Status == "Pending")
-            .OrderBy(s => s.CreatedAt)
+        var query = _context.Scholarships.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            query = query.Where(s => s.Status == statusFilter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(s => s.Title.Contains(search)
+                || (s.InstitutionName != null && s.InstitutionName.Contains(search)));
+        }
+
+        var listings = await query
+            .OrderBy(s => s.Status == "Pending" ? 0 : 1)
+            .ThenByDescending(s => s.CreatedAt)
             .ToListAsync();
 
-        return View(pending);
+        ViewBag.Search = search;
+        ViewBag.StatusFilter = statusFilter;
+        return View(listings);
     }
 
     public async Task<IActionResult> ListingDetails(int id)

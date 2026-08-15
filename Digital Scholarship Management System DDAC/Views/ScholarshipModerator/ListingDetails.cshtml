@@ -1,13 +1,13 @@
 @model Digital_Scholarship_Management_System_DDAC.Models.Scholarship
 
 @{
-    ViewData["Title"] = "Review Listing";
+    ViewData["Title"] = "Listing Details";
 }
 
 <div class="container mt-4" style="max-width: 700px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Review Listing</h2>
-        <a asp-action="Listings" class="btn btn-outline-secondary">Back to Queue</a>
+        <h2 class="mb-0">Listing Details</h2>
+        <a asp-action="Listings" class="btn btn-outline-secondary">Back to List</a>
     </div>
 
     <div class="card shadow-sm border-0 mb-4">
@@ -42,25 +42,65 @@
 
                 <dt class="col-sm-4">Application Deadline</dt>
                 <dd class="col-sm-8">@(Model.ApplicationDeadline.HasValue ? Model.ApplicationDeadline.Value.ToString("dd MMM yyyy") : "None")</dd>
+
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                    @switch (Model.Status)
+                    {
+                        case "Pending":
+                            <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+                            break;
+                        case "Open":
+                            <span class="badge bg-success px-3 py-2">Open</span>
+                            break;
+                        case "Closed":
+                            <span class="badge bg-secondary px-3 py-2">Closed</span>
+                            break;
+                        case "Rejected":
+                            <span class="badge bg-danger px-3 py-2">Rejected</span>
+                            break;
+                    }
+                </dd>
+
+                @if (Model.DecisionAt.HasValue)
+                {
+                    <dt class="col-sm-4">Decided At</dt>
+                    <dd class="col-sm-8">@Model.DecisionAt.Value.ToString("dd MMM yyyy, hh:mm tt")</dd>
+                }
+
+                @if (Model.Status == "Rejected" && !string.IsNullOrEmpty(Model.RejectionReason))
+                {
+                    <dt class="col-sm-4">Rejection Reason</dt>
+                    <dd class="col-sm-8 text-danger">@Model.RejectionReason</dd>
+                }
             </dl>
         </div>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <form asp-action="ApproveListing" method="post">
-                <input type="hidden" name="id" value="@Model.ScholarshipId" />
-                <button type="submit" class="btn btn-success w-100">Approve Listing</button>
-            </form>
+    @if (Model.Status == "Pending")
+    {
+        <div class="row g-3">
+            <div class="col-md-6">
+                <form asp-action="ApproveListing" method="post">
+                    <input type="hidden" name="id" value="@Model.ScholarshipId" />
+                    <button type="submit" class="btn btn-success w-100">Approve Listing</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form asp-action="RejectListing" method="post">
+                    <input type="hidden" name="id" value="@Model.ScholarshipId" />
+                    <div class="input-group">
+                        <input type="text" name="rejectionReason" class="form-control" placeholder="Reason for rejection" required />
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="col-md-6">
-            <form asp-action="RejectListing" method="post">
-                <input type="hidden" name="id" value="@Model.ScholarshipId" />
-                <div class="input-group">
-                    <input type="text" name="rejectionReason" class="form-control" placeholder="Reason for rejection" required />
-                    <button type="submit" class="btn btn-danger">Reject</button>
-                </div>
-            </form>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            This listing has already been reviewed. No further action is available here.
         </div>
-    </div>
+    }
 </div>
