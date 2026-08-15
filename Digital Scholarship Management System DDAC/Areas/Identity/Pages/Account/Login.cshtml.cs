@@ -103,6 +103,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Areas.Identity.Pages.Accoun
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            bool hasExplicitReturnUrl = !string.IsNullOrEmpty(returnUrl);
             returnUrl ??= Url.Content("~/");
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
@@ -115,6 +116,27 @@ namespace Digital_Scholarship_Management_System_DDAC.Areas.Identity.Pages.Accoun
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+
+                    // If the user wasn't bounced here from a specific page, send them
+                    // straight to their own role's dashboard instead of the generic home page.
+                    if (!hasExplicitReturnUrl)
+                    {
+                        var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
+                        if (user != null)
+                        {
+                            var roles = await _signInManager.UserManager.GetRolesAsync(user);
+                            var dashboardUrl = roles.FirstOrDefault() switch
+                            {
+                                "Admin" => "/Admin",
+                                "Moderator" => "/ScholarshipModerator",
+                                "Student" => "/Student",
+                                "Provider" => "/Provider",
+                                _ => returnUrl
+                            };
+                            return LocalRedirect(dashboardUrl);
+                        }
+                    }
+
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)

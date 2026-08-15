@@ -68,6 +68,90 @@ public class AdminController : Controller
         return View(model);
     }
 
+    public async Task<IActionResult> UserDetails(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "(none)";
+
+        var model = new AdminUserDetailsViewModel
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email ?? string.Empty,
+            PhoneNumber = user.PhoneNumber,
+            Role = role,
+            IsLockedOut = await _userManager.IsLockedOutAsync(user),
+            EmailConfirmed = user.EmailConfirmed
+        };
+
+        if (role == "Student")
+        {
+            model.StudentProfile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        }
+        else if (role == "Provider")
+        {
+            model.InstitutionProfile = await _context.InstitutionProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        }
+
+        return View(model);
+    }
+
+    public IActionResult CreateStaffUser()
+    {
+        return View(new CreateStaffUserViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateStaffUser(CreateStaffUserViewModel model)
+    {
+        if (model.Role != "Admin" && model.Role != "Moderator")
+        {
+            ModelState.AddModelError(nameof(model.Role), "Only Admin or Moderator accounts can be created here.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var existingUser = await _userManager.FindByEmailAsync(model.Email);
+        if (existingUser != null)
+        {
+            ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+            return View(model);
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            FullName = model.FullName,
+            EmailConfirmed = true
+        };
+
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return View(model);
+        }
+
+        await _userManager.AddToRoleAsync(user, model.Role);
+
+        TempData["StatusMessage"] = $"{model.Role} account created for {model.FullName} ({model.Email}).";
+        return RedirectToAction(nameof(Users));
+    }
+
     public async Task<IActionResult> EditUserRole(string id)
     {
         var user = await _userManager.FindByIdAsync(id);

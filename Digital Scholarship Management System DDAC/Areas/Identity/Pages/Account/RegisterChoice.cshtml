@@ -1,0 +1,36 @@
+@page
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container mt-5" style="max-width: 700px;">
+    <h1 class="text-center mb-2">@ViewData["Title"]</h1>
+    <p class="text-center text-muted mb-4">Tell us who you are so we can set up the right kind of account.</p>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100 text-center">
+                <div class="card-body d-flex flex-column">
+                    <i class="bi bi-mortarboard-fill text-primary" style="font-size: 2.5rem;"></i>
+                    <h5 class="card-title mt-3">I'm a Student</h5>
+                    <p class="card-text text-muted flex-grow-1">Looking for scholarships to apply for.</p>
+                    <a asp-page="./Register" class="btn btn-primary">Register as a Student</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100 text-center">
+                <div class="card-body d-flex flex-column">
+                    <i class="bi bi-building-fill text-primary" style="font-size: 2.5rem;"></i>
+                    <h5 class="card-title mt-3">I'm an Institution</h5>
+                    <p class="card-text text-muted flex-grow-1">Want to list scholarships for students to apply to.</p>
+                    <a asp-controller="Provider" asp-action="SignUp" class="btn btn-primary">Register as a Provider</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-center mt-4">
+        Already have an account? <a asp-page="./Login">Log in</a>
+    </p>
+</div>
