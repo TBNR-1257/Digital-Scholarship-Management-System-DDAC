@@ -126,7 +126,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             return View(model);
         }
 
-        // 3. APPLY FOR SCHOLARSHIP & UPLOAD DOC (POST)
+        // 3. APPLY FOR SCHOLARSHIP & UPLOAD ALL REQUIRED DOCUMENTS (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SubmitApplication(ApplicationSubmissionViewModel model)
@@ -149,65 +149,40 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
                 return RedirectToAction(nameof(TrackStatus));
             }
 
-            if (model.DocumentFile != null && model.DocumentFile.Length > 0)
+            if (!ModelState.IsValid)
             {
-                // Upload file locally to wwwroot/uploads
-                string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.DocumentFile.FileName);
-                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await model.DocumentFile.CopyToAsync(stream);
-                }
-
-                // 1. Create Application
-                var application = new Application
-                {
-                    ScholarshipId = model.ScholarshipId,
-                    StudentId = currentUserId,
-                    Status = "Submitted",
-                    SubmittedAt = DateTime.UtcNow
-                };
-
-                _context.Applications.Add(application);
-                await _context.SaveChangesAsync();
-
-                // 2. Create Document
-                var document = new Document
-                {
-                    ApplicationId = application.ApplicationId,
-                    DocumentType = model.DocumentType,
-                    FileName = model.DocumentFile.FileName,
-                    FilePath = "/uploads/" + uniqueFileName,
-                    UploadedAt = DateTime.UtcNow,
-                    VerificationStatus = "Pending"
-                };
-
-                _context.Documents.Add(document);
-
-                // 3. Create Automated Notification
-                var notification = new Notification
-                {
-                    UserId = currentUserId,
-                    Message = $"Your application for '{scholarship.Title}' has been successfully submitted.",
-                    IsRead = false,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Notifications.Add(notification);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Application submitted successfully!";
-                return RedirectToAction(nameof(TrackStatus));
+                model.ScholarshipTitle = scholarship.Title;
+                return View("Apply", model);
             }
 
-            // FIXED: Re-populate ScholarshipTitle so the view doesn't render an empty heading
-            model.ScholarshipTitle = scholarship.Title;
-            ModelState.AddModelError("", "Please select a document to upload.");
-            return View("Apply", model);
+            var application = new Application
+            {
+                ScholarshipId = model.ScholarshipId,
+                StudentId = currentUserId,
+                Status = "Submitted",
+                SubmittedAt = DateTime.UtcNow
+            };
+
+            _context.Applications.Add(application);
+            await _context.SaveChangesAsync();
+
+            await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.Transcript, model.TranscriptFile!);
+            await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.IncomeProof, model.IncomeProofFile!);
+            await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.Certificate, model.CertificateFile!);
+            await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.IdCard, model.IdCardFile!);
+
+            _context.Notifications.Add(new Notification
+            {
+                UserId = currentUserId,
+                Message = $"Your application for '{scholarship.Title}' has been successfully submitted.",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Application submitted successfully!";
+            return RedirectToAction(nameof(TrackStatus));
         }
 
         // 4. APPLICATION TRACKER
@@ -215,26 +190,102 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
         {
             string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            // Query applications and join with Scholarship & Document models
-            var trackingList = await (from app in _context.Applications
-                                      where app.StudentId == currentUserId
-                                      join sch in _context.Scholarships on app.ScholarshipId equals sch.ScholarshipId
-                                      join doc in _context.Documents on app.ApplicationId equals doc.ApplicationId into docGroup
-                                      from doc in docGroup.DefaultIfEmpty()
-                                      orderby app.SubmittedAt descending
-                                      select new ApplicationTrackerViewModel
-                                      {
-                                          ApplicationId = app.ApplicationId,
-                                          ScholarshipTitle = sch.Title,
-                                          Status = app.Status,
-                                          SubmittedAt = app.SubmittedAt,
-                                          DocumentType = doc != null ? doc.DocumentType : null,
-                                          DocumentFileName = doc != null ? doc.FileName : null,
-                                          DocumentPath = doc != null ? doc.FilePath : null,
-                                          VerificationStatus = doc != null ? doc.VerificationStatus : "Pending"
-                                      }).ToListAsync();
+            var applications = await (from app in _context.Applications
+                                       where app.StudentId == currentUserId
+                                       join sch in _context.Scholarships on app.ScholarshipId equals sch.ScholarshipId
+                                       orderby app.SubmittedAt descending
+                                       select new { app.ApplicationId, app.Status, app.SubmittedAt, ScholarshipTitle = sch.Title })
+                                      .ToListAsync();
+
+            var applicationIds = applications.Select(a => a.ApplicationId).ToList();
+            var documents = await _context.Documents
+                .Where(d => applicationIds.Contains(d.ApplicationId))
+                .ToListAsync();
+
+            var trackingList = applications.Select(a => new ApplicationTrackerViewModel
+            {
+                ApplicationId = a.ApplicationId,
+                ScholarshipTitle = a.ScholarshipTitle,
+                Status = a.Status,
+                SubmittedAt = a.SubmittedAt,
+                Documents = documents
+                    .Where(d => d.ApplicationId == a.ApplicationId)
+                    .Select(ToDocumentViewModel)
+                    .ToList()
+            }).ToList();
 
             return View(trackingList);
+        }
+
+        // 5. EDIT APPLICATION DOCUMENTS WHILE STILL PENDING (GET)
+        public async Task<IActionResult> EditApplication(int applicationId)
+        {
+            string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var application = await _context.Applications
+                .FirstOrDefaultAsync(a => a.ApplicationId == applicationId && a.StudentId == currentUserId);
+
+            if (application == null) return NotFound();
+
+            if (application.Status == "Approved" || application.Status == "Rejected")
+            {
+                TempData["ErrorMessage"] = "This application has already been decided and can no longer be edited.";
+                return RedirectToAction(nameof(TrackStatus));
+            }
+
+            var scholarship = await _context.Scholarships.FindAsync(application.ScholarshipId);
+            var documents = await _context.Documents
+                .Where(d => d.ApplicationId == applicationId)
+                .ToListAsync();
+
+            var model = new ApplicationDocumentEditViewModel
+            {
+                ApplicationId = applicationId,
+                ScholarshipTitle = scholarship?.Title ?? "Scholarship",
+                CurrentTranscriptFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript)?.FileName,
+                CurrentTranscriptFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript)?.FilePath,
+                CurrentIncomeProofFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof)?.FileName,
+                CurrentIncomeProofFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof)?.FilePath,
+                CurrentCertificateFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate)?.FileName,
+                CurrentCertificateFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate)?.FilePath,
+                CurrentIdCardFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard)?.FileName,
+                CurrentIdCardFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard)?.FilePath
+            };
+
+            return View(model);
+        }
+
+        // 5. EDIT APPLICATION DOCUMENTS WHILE STILL PENDING (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditApplication(ApplicationDocumentEditViewModel model)
+        {
+            string currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var application = await _context.Applications
+                .FirstOrDefaultAsync(a => a.ApplicationId == model.ApplicationId && a.StudentId == currentUserId);
+
+            if (application == null) return NotFound();
+
+            if (application.Status == "Approved" || application.Status == "Rejected")
+            {
+                TempData["ErrorMessage"] = "This application has already been decided and can no longer be edited.";
+                return RedirectToAction(nameof(TrackStatus));
+            }
+
+            var documents = await _context.Documents
+                .Where(d => d.ApplicationId == application.ApplicationId)
+                .ToListAsync();
+
+            await ReplaceDocumentIfProvidedAsync(documents, application.ApplicationId, DocumentTypeCatalog.Transcript, model.TranscriptFile);
+            await ReplaceDocumentIfProvidedAsync(documents, application.ApplicationId, DocumentTypeCatalog.IncomeProof, model.IncomeProofFile);
+            await ReplaceDocumentIfProvidedAsync(documents, application.ApplicationId, DocumentTypeCatalog.Certificate, model.CertificateFile);
+            await ReplaceDocumentIfProvidedAsync(documents, application.ApplicationId, DocumentTypeCatalog.IdCard, model.IdCardFile);
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Application updated successfully.";
+            return RedirectToAction(nameof(TrackStatus));
         }
 
         // MARK NOTIFICATION AS READ
@@ -250,7 +301,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             return Ok();
         }
 
-        // 5. WITHDRAW / DELETE APPLICATION (POST)
+        // 6. WITHDRAW / DELETE APPLICATION (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> WithdrawApplication(int applicationId)
@@ -279,17 +330,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
             // 3. Delete physical files from wwwroot/uploads
             foreach (var doc in documents)
             {
-                if (!string.IsNullOrEmpty(doc.FilePath))
-                {
-                    // Convert relative path ("/uploads/file.pdf") to physical path
-                    string relativePath = doc.FilePath.TrimStart('/', '\\');
-                    string physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
-
-                    if (System.IO.File.Exists(physicalPath))
-                    {
-                        System.IO.File.Delete(physicalPath);
-                    }
-                }
+                DeletePhysicalFile(doc.FilePath);
             }
 
             // 4. Remove database records
@@ -351,5 +392,90 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // ---- helpers ----
+
+        private async Task AddDocumentAsync(int applicationId, string documentType, IFormFile file)
+        {
+            string filePath = await SaveUploadedFileAsync(file);
+
+            _context.Documents.Add(new Document
+            {
+                ApplicationId = applicationId,
+                DocumentType = documentType,
+                FileName = file.FileName,
+                FilePath = filePath,
+                UploadedAt = DateTime.UtcNow,
+                VerificationStatus = "Pending"
+            });
+        }
+
+        private async Task ReplaceDocumentIfProvidedAsync(List<Document> existingDocuments, int applicationId, string documentType, IFormFile? newFile)
+        {
+            if (newFile == null || newFile.Length == 0) return;
+
+            string filePath = await SaveUploadedFileAsync(newFile);
+            var existing = existingDocuments.FirstOrDefault(d => d.DocumentType == documentType);
+
+            if (existing != null)
+            {
+                DeletePhysicalFile(existing.FilePath);
+                existing.FileName = newFile.FileName;
+                existing.FilePath = filePath;
+                existing.UploadedAt = DateTime.UtcNow;
+                existing.VerificationStatus = "Pending"; // replaced file needs re-verification
+            }
+            else
+            {
+                _context.Documents.Add(new Document
+                {
+                    ApplicationId = applicationId,
+                    DocumentType = documentType,
+                    FileName = newFile.FileName,
+                    FilePath = filePath,
+                    UploadedAt = DateTime.UtcNow,
+                    VerificationStatus = "Pending"
+                });
+            }
+        }
+
+        private async Task<string> SaveUploadedFileAsync(IFormFile file)
+        {
+            string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string uniqueFileName = Guid.NewGuid() + "_" + Path.GetFileName(file.FileName);
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return "/uploads/" + uniqueFileName;
+        }
+
+        private void DeletePhysicalFile(string? relativeFilePath)
+        {
+            if (string.IsNullOrEmpty(relativeFilePath)) return;
+
+            string relativePath = relativeFilePath.TrimStart('/', '\\');
+            string physicalPath = Path.Combine(_environment.WebRootPath, relativePath);
+
+            if (System.IO.File.Exists(physicalPath))
+            {
+                System.IO.File.Delete(physicalPath);
+            }
+        }
+
+        private static ApplicationDocumentViewModel ToDocumentViewModel(Document d) => new()
+        {
+            DocumentId = d.DocumentId,
+            DocumentType = d.DocumentType,
+            DocumentTypeLabel = DocumentTypeCatalog.GetLabel(d.DocumentType),
+            FileName = d.FileName,
+            FilePath = d.FilePath,
+            VerificationStatus = d.VerificationStatus
+        };
     }
 }

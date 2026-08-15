@@ -11,7 +11,5 @@ public class ApplicationReviewViewModel
     public string StudentName { get; set; } = string.Empty;
     public string StudentEmail { get; set; } = string.Empty;
 
-    public string? DocumentType { get; set; }
-    public string? DocumentFileName { get; set; }
-    public string? DocumentPath { get; set; }
+    public List<ApplicationDocumentViewModel> Documents { get; set; } = new();
 }

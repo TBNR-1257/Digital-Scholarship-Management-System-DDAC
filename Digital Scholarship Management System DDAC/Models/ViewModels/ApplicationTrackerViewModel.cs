@@ -1,4 +1,4 @@
-﻿namespace Digital_Scholarship_Management_System_DDAC.Models.ViewModels
+namespace Digital_Scholarship_Management_System_DDAC.Models.ViewModels
 {
     public class ApplicationTrackerViewModel
     {
@@ -6,9 +6,8 @@
         public string ScholarshipTitle { get; set; } = string.Empty;
         public string Status { get; set; } = "Submitted";
         public DateTime? SubmittedAt { get; set; }
-        public string? DocumentType { get; set; }
-        public string? DocumentFileName { get; set; }
-        public string? DocumentPath { get; set; }
-        public string VerificationStatus { get; set; } = "Pending";
+        public List<ApplicationDocumentViewModel> Documents { get; set; } = new();
+
+        public bool CanEdit => Status != "Approved" && Status != "Rejected";
     }
 }

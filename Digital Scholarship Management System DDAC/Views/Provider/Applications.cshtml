@@ -40,13 +40,18 @@ else
                     <td>@app.StudentName <br /><small class="text-muted">@app.StudentEmail</small></td>
                     <td>@(app.SubmittedAt?.ToString("yyyy-MM-dd") ?? "-")</td>
                     <td>
-                        @if (!string.IsNullOrEmpty(app.DocumentPath))
+                        @if (!app.Documents.Any())
                         {
-                            <a href="@app.DocumentPath" target="_blank">@app.DocumentType: @app.DocumentFileName</a>
+                            <span class="text-muted">No documents</span>
                         }
                         else
                         {
-                            <span class="text-muted">No document</span>
+                            <ul class="list-unstyled mb-0 small">
+                                @foreach (var doc in app.Documents)
+                                {
+                                    <li><a href="@doc.FilePath" target="_blank">@doc.DocumentTypeLabel</a></li>
+                                }
+                            </ul>
                         }
                     </td>
                     <td>
