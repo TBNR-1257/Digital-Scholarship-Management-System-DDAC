@@ -236,10 +236,7 @@ public class ProviderController : Controller
             InstitutionName = institution.InstitutionName,
             Description = model.Description,
             MinCgpa = model.MinCgpa,
-            // Stored in the shared MaxHouseholdIncome column, but this form
-            // treats it as a minimum-income threshold - Kareshma's Student
-            // matching query is being updated separately to match.
-            MaxHouseholdIncome = model.MinHouseholdIncome,
+            MaxHouseholdIncome = model.MaxHouseholdIncome,
             RequiredProgram = model.RequiredProgram,
             Quota = model.Quota,
             AmountPerRecipient = model.AmountPerRecipient,
@@ -282,7 +279,7 @@ public class ProviderController : Controller
             // scale (from EF Core's default precision) that would otherwise
             // show up as a long string of trailing zeros in these inputs.
             MinCgpa = scholarship.MinCgpa.HasValue ? Math.Round(scholarship.MinCgpa.Value, 2) : null,
-            MinHouseholdIncome = scholarship.MaxHouseholdIncome.HasValue ? Math.Round(scholarship.MaxHouseholdIncome.Value, 2) : null,
+            MaxHouseholdIncome = scholarship.MaxHouseholdIncome.HasValue ? Math.Round(scholarship.MaxHouseholdIncome.Value, 2) : null,
             RequiredProgram = scholarship.RequiredProgram,
             Quota = scholarship.Quota,
             AmountPerRecipient = Math.Round(scholarship.AmountPerRecipient, 2),
@@ -320,7 +317,7 @@ public class ProviderController : Controller
         scholarship.Title = model.Title;
         scholarship.Description = model.Description;
         scholarship.MinCgpa = model.MinCgpa;
-        scholarship.MaxHouseholdIncome = model.MinHouseholdIncome;
+        scholarship.MaxHouseholdIncome = model.MaxHouseholdIncome;
         scholarship.RequiredProgram = model.RequiredProgram;
         scholarship.Quota = model.Quota;
         scholarship.AmountPerRecipient = model.AmountPerRecipient;

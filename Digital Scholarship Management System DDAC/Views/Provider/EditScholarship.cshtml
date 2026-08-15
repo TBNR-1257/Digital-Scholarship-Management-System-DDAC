@@ -31,10 +31,10 @@
             <span asp-validation-for="MinCgpa" class="text-danger"></span>
         </div>
         <div class="col-md-6 form-group mb-3">
-            <label asp-for="MinHouseholdIncome" class="form-label"></label>
-            <input asp-for="MinHouseholdIncome" class="form-control" type="number" step="0.01" />
-            <small class="form-text text-muted">Enter 0 if there's no income requirement.</small>
-            <span asp-validation-for="MinHouseholdIncome" class="text-danger"></span>
+            <label asp-for="MaxHouseholdIncome" class="form-label"></label>
+            <input asp-for="MaxHouseholdIncome" class="form-control" type="number" step="0.01" />
+            <small class="form-text text-muted">Enter a large number if there's no income requirement.</small>
+            <span asp-validation-for="MaxHouseholdIncome" class="text-danger"></span>
         </div>
     </div>
 
