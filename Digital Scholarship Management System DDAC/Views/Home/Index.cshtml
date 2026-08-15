@@ -1,8 +1,65 @@
-﻿@{
+@using Digital_Scholarship_Management_System_DDAC.Data
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    var currentUser = await UserManager.GetUserAsync(User);
+    <div class="container mt-5 text-center">
+        <h1 class="display-5 fw-bold">Welcome back, @(currentUser?.FullName ?? User.Identity!.Name)!</h1>
+        <p class="lead text-muted">Use the Dashboard link in the menu above to continue.</p>
+    </div>
+}
+else
+{
+    <div class="container">
+        <div class="bg-primary text-white text-center rounded-4 p-5 mb-5 shadow-sm">
+            <i class="bi bi-mortarboard-fill" style="font-size: 3.5rem;"></i>
+            <h1 class="display-5 fw-bold mt-3">Digital Scholarship Management System</h1>
+            <p class="lead mb-4">Connecting students with scholarship opportunities from verified institutions — all in one place.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-area="Identity" asp-page="/Account/RegisterChoice" class="btn btn-light btn-lg">Get Started</a>
+                <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-light btn-lg">Log In</a>
+            </div>
+        </div>
+
+        <div class="row g-4 text-center mb-5">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <i class="bi bi-search text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-3">Find Scholarships</h5>
+                        <p class="card-text text-muted">Browse scholarships from verified institutions matched to your background.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <i class="bi bi-file-earmark-check text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-3">Apply Online</h5>
+                        <p class="card-text text-muted">Submit your application and supporting documents entirely online.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <i class="bi bi-journal-check text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-3">Track Your Status</h5>
+                        <p class="card-text text-muted">Follow your application from submission to decision in real time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-5">
+            <h4>Representing an institution?</h4>
+            <p class="text-muted">Register your institution to list scholarships for students to apply to.</p>
+            <a asp-controller="Provider" asp-action="SignUp" class="btn btn-outline-primary">Register as a Provider</a>
+        </div>
+    </div>
+}
