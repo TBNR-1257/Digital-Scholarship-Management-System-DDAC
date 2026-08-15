@@ -15,4 +15,8 @@ public class InstitutionRegisterViewModel
     [Phone]
     [Display(Name = "Contact Phone")]
     public string? ContactPhone { get; set; }
+
+    [Required(ErrorMessage = "Please upload a registration document for moderator review.")]
+    [Display(Name = "Registration Document")]
+    public IFormFile? RegistrationDocument { get; set; }
 }
