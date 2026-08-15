@@ -15,10 +15,10 @@ public class ScholarshipCreateViewModel
     [Range(0, 4.0, ErrorMessage = "CGPA must be between 0 and 4.0.")]
     public decimal? MinCgpa { get; set; }
 
-    [Required(ErrorMessage = "Please specify the minimum household income (enter 0 if there's no requirement).")]
-    [Display(Name = "Minimum Household Income (RM)")]
+    [Required(ErrorMessage = "Please specify the maximum household income (enter a large number if there's no requirement).")]
+    [Display(Name = "Maximum Household Income (RM)")]
     [Range(0, double.MaxValue)]
-    public decimal? MinHouseholdIncome { get; set; }
+    public decimal? MaxHouseholdIncome { get; set; }
 
     [Required(ErrorMessage = "Please specify a required program, or enter 'All' if open to everyone.")]
     [Display(Name = "Required Program")]
