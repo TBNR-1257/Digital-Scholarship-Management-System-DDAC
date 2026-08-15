@@ -9,7 +9,7 @@
 {
     var currentUser = await UserManager.GetUserAsync(User);
     <div class="container mt-5 text-center">
-        <h1 class="display-5 fw-bold">Welcome back, @(currentUser?.FullName ?? User.Identity!.Name)!</h1>
+        <h1 class="display-5 fw-bold">Welcome back!</h1>
         <p class="lead text-muted">Use the Dashboard link in the menu above to continue.</p>
     </div>
 }

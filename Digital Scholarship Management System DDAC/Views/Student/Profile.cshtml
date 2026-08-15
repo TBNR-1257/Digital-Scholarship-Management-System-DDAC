@@ -51,13 +51,28 @@
 
                     <div class="col-md-6">
                         <label asp-for="CurrentCGPA" class="form-label fw-bold">Current CGPA</label>
-                        <input asp-for="CurrentCGPA" type="number" step="0.01" min="0.00" max="4.00" class="form-control" placeholder="3.75" required />
+                        <input asp-for="CurrentCGPA"
+                               asp-format="{0:0.00}"
+                               type="number"
+                               step="0.01"
+                               min="0.00"
+                               max="4.00"
+                               class="form-control"
+                               placeholder="3.75"
+                               required />
                         <span asp-validation-for="CurrentCGPA" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6">
                         <label asp-for="HouseholdIncome" class="form-label fw-bold">Monthly Household Income (RM)</label>
-                        <input asp-for="HouseholdIncome" type="number" step="0.01" min="0.00" class="form-control" placeholder="4500.00" />
+                        <input asp-for="HouseholdIncome"
+                               asp-format="{0:0.00}"
+                               type="number"
+                               step="0.01"
+                               min="0.00"
+                               class="form-control"
+                               placeholder="4500.00" />
+                        <span asp-validation-for="HouseholdIncome" class="text-danger"></span>
                     </div>
                 </div>
 
