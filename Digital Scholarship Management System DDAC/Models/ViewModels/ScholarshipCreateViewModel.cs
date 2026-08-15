@@ -37,4 +37,20 @@ public class ScholarshipCreateViewModel
     [Display(Name = "Application Deadline")]
     [DataType(DataType.Date)]
     public DateTime? ApplicationDeadline { get; set; }
+
+    [Required(ErrorMessage = "Scholarship Policy Framework document is required.")]
+    [Display(Name = "Scholarship Policy Framework")]
+    public IFormFile? PolicyFrameworkFile { get; set; }
+
+    [Required(ErrorMessage = "Eligibility and Assessment Criteria document is required.")]
+    [Display(Name = "Eligibility and Assessment Criteria")]
+    public IFormFile? EligibilityCriteriaFile { get; set; }
+
+    [Required(ErrorMessage = "Allocation and Disbursement Budget document is required.")]
+    [Display(Name = "Allocation and Disbursement Budget")]
+    public IFormFile? AllocationBudgetFile { get; set; }
+
+    [Required(ErrorMessage = "Data Protection and Privacy Policy document is required.")]
+    [Display(Name = "Data Protection and Privacy Policy")]
+    public IFormFile? PrivacyPolicyFile { get; set; }
 }

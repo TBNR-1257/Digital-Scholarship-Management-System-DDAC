@@ -78,10 +78,40 @@ else
                         {
                             <a class="btn btn-sm btn-outline-secondary" asp-action="EditScholarship" asp-route-id="@s.ScholarshipId">Edit</a>
                         }
+                        @if (s.Status == "Open")
+                        {
+                            <form asp-action="CloseScholarship" asp-route-id="@s.ScholarshipId" method="post"
+                                  onsubmit="return confirm('Mark this listing as closed/expired? Students will no longer be able to apply.');">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">Close/Expire</button>
+                            </form>
+                        }
                         <form asp-action="DeleteScholarship" asp-route-id="@s.ScholarshipId" method="post"
                               onsubmit="return confirm('Delete this scholarship listing? This cannot be undone.');">
                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                         </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="pt-0">
+                        <small class="text-muted">Documents:</small>
+                        <ul class="list-inline mb-0 small d-inline">
+                            @if (!string.IsNullOrEmpty(s.PolicyFrameworkDocumentPath))
+                            {
+                                <li class="list-inline-item"><a href="@s.PolicyFrameworkDocumentPath" target="_blank">Policy Framework</a></li>
+                            }
+                            @if (!string.IsNullOrEmpty(s.EligibilityCriteriaDocumentPath))
+                            {
+                                <li class="list-inline-item"><a href="@s.EligibilityCriteriaDocumentPath" target="_blank">Eligibility Criteria</a></li>
+                            }
+                            @if (!string.IsNullOrEmpty(s.AllocationBudgetDocumentPath))
+                            {
+                                <li class="list-inline-item"><a href="@s.AllocationBudgetDocumentPath" target="_blank">Allocation Budget</a></li>
+                            }
+                            @if (!string.IsNullOrEmpty(s.PrivacyPolicyDocumentPath))
+                            {
+                                <li class="list-inline-item"><a href="@s.PrivacyPolicyDocumentPath" target="_blank">Privacy Policy</a></li>
+                            }
+                        </ul>
                     </td>
                 </tr>
                 @if (s.Status == "Rejected" && !string.IsNullOrEmpty(s.RejectionReason))

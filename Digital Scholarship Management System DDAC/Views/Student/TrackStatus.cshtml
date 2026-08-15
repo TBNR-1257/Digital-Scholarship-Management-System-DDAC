@@ -57,7 +57,13 @@
                             @foreach (var app in Model)
                             {
                                 <tr>
-                                    <td class="fw-bold text-primary">@app.ScholarshipTitle</td>
+                                    <td class="fw-bold text-primary">
+                                        @app.ScholarshipTitle
+                                        @if (app.ScholarshipStatus == "Closed")
+                                        {
+                                            <span class="badge bg-secondary ms-1">Listing Closed/Expired</span>
+                                        }
+                                    </td>
                                     <td>@(app.SubmittedAt.HasValue ? app.SubmittedAt.Value.ToString("dd MMM yyyy, hh:mm tt") : "Draft")</td>
                                     <td>
                                         @if (app.Status == "Approved")

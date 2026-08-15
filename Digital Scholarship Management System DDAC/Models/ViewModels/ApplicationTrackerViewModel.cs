@@ -5,6 +5,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Models.ViewModels
         public int ApplicationId { get; set; }
         public string ScholarshipTitle { get; set; } = string.Empty;
         public string Status { get; set; } = "Submitted";
+        public string ScholarshipStatus { get; set; } = string.Empty;
         public DateTime? SubmittedAt { get; set; }
         public List<ApplicationDocumentViewModel> Documents { get; set; } = new();
 

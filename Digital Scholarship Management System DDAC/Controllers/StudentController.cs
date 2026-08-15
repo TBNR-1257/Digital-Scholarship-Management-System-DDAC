@@ -123,6 +123,8 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
                 ScholarshipTitle = scholarship.Title
             };
 
+            ViewBag.Scholarship = scholarship;
+
             return View(model);
         }
 
@@ -194,7 +196,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
                                        where app.StudentId == currentUserId
                                        join sch in _context.Scholarships on app.ScholarshipId equals sch.ScholarshipId
                                        orderby app.SubmittedAt descending
-                                       select new { app.ApplicationId, app.Status, app.SubmittedAt, ScholarshipTitle = sch.Title })
+                                       select new { app.ApplicationId, app.Status, app.SubmittedAt, ScholarshipTitle = sch.Title, ScholarshipStatus = sch.Status })
                                       .ToListAsync();
 
             var applicationIds = applications.Select(a => a.ApplicationId).ToList();
@@ -207,6 +209,7 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers
                 ApplicationId = a.ApplicationId,
                 ScholarshipTitle = a.ScholarshipTitle,
                 Status = a.Status,
+                ScholarshipStatus = a.ScholarshipStatus,
                 SubmittedAt = a.SubmittedAt,
                 Documents = documents
                     .Where(d => d.ApplicationId == a.ApplicationId)

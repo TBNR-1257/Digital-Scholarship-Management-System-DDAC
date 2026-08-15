@@ -31,4 +31,11 @@ public class Scholarship
     public string? ApprovedByUserId { get; set; } // Bryan's User ID
     public DateTime? DecisionAt { get; set; }
     public string? RejectionReason { get; set; }
+
+    // 4 required supporting documents, set once at creation. Viewable by
+    // Moderator (approval), Student (before applying), and the Provider.
+    public string? PolicyFrameworkDocumentPath { get; set; }
+    public string? EligibilityCriteriaDocumentPath { get; set; }
+    public string? AllocationBudgetDocumentPath { get; set; }
+    public string? PrivacyPolicyDocumentPath { get; set; }
 }

@@ -7,7 +7,7 @@
 <h1>@ViewData["Title"]</h1>
 <p class="text-muted">Editing a rejected listing will resubmit it to the moderator for a fresh review.</p>
 
-<form asp-action="EditScholarship" asp-route-id="@Model.ScholarshipId" method="post">
+<form asp-action="EditScholarship" asp-route-id="@Model.ScholarshipId" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <input type="hidden" asp-for="ScholarshipId" />
 
@@ -61,6 +61,46 @@
             <input asp-for="ApplicationDeadline" class="form-control" type="date" />
             <span asp-validation-for="ApplicationDeadline" class="text-danger"></span>
         </div>
+    </div>
+
+    <h5 class="mt-4">Supporting Documents</h5>
+    <p class="text-muted small">Leave a document blank to keep the existing one.</p>
+
+    <div class="form-group mb-3">
+        <label asp-for="PolicyFrameworkFile" class="form-label"></label>
+        @if (!string.IsNullOrEmpty(Model.CurrentPolicyFrameworkPath))
+        {
+            <div><a href="@Model.CurrentPolicyFrameworkPath" target="_blank" class="small">View current file</a></div>
+        }
+        <input asp-for="PolicyFrameworkFile" class="form-control" type="file" />
+        <span asp-validation-for="PolicyFrameworkFile" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="EligibilityCriteriaFile" class="form-label"></label>
+        @if (!string.IsNullOrEmpty(Model.CurrentEligibilityCriteriaPath))
+        {
+            <div><a href="@Model.CurrentEligibilityCriteriaPath" target="_blank" class="small">View current file</a></div>
+        }
+        <input asp-for="EligibilityCriteriaFile" class="form-control" type="file" />
+        <span asp-validation-for="EligibilityCriteriaFile" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="AllocationBudgetFile" class="form-label"></label>
+        @if (!string.IsNullOrEmpty(Model.CurrentAllocationBudgetPath))
+        {
+            <div><a href="@Model.CurrentAllocationBudgetPath" target="_blank" class="small">View current file</a></div>
+        }
+        <input asp-for="AllocationBudgetFile" class="form-control" type="file" />
+        <span asp-validation-for="AllocationBudgetFile" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-4">
+        <label asp-for="PrivacyPolicyFile" class="form-label"></label>
+        @if (!string.IsNullOrEmpty(Model.CurrentPrivacyPolicyPath))
+        {
+            <div><a href="@Model.CurrentPrivacyPolicyPath" target="_blank" class="small">View current file</a></div>
+        }
+        <input asp-for="PrivacyPolicyFile" class="form-control" type="file" />
+        <span asp-validation-for="PrivacyPolicyFile" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary">Save Changes</button>
