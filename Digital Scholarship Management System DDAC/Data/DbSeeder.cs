@@ -21,10 +21,8 @@ public static class DbSeeder
             }
         }
 
-        await EnsureDemoUserAsync(userManager, "admin@ddac.edu", "System Admin", "Admin"); 
+        await EnsureDemoUserAsync(userManager, "admin@ddac.edu", "System Admin", "Admin");
         await EnsureDemoUserAsync(userManager, "officer@ddac.edu", "Scholarship Moderator", "Moderator");
-        await EnsureDemoUserAsync(userManager, "student@ddac.edu", "Demo Student", "Student");
-        await EnsureDemoUserAsync(userManager, "reviewer@ddac.edu", "Demo Institution Provider", "Provider");
     }
 
     private static async Task EnsureDemoUserAsync(UserManager<ApplicationUser> userManager, string email, string fullName, string role)

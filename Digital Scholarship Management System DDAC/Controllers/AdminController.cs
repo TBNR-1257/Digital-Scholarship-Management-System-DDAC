@@ -42,13 +42,23 @@ public class AdminController : Controller
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "(none)";
+
+            string? institutionVerificationStatus = null;
+            if (role == "Provider")
+            {
+                var institution = await _context.InstitutionProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                institutionVerificationStatus = institution?.VerificationStatus;
+            }
+
             list.Add(new AdminUserListItemViewModel
             {
                 Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email ?? string.Empty,
-                Role = roles.FirstOrDefault() ?? "(none)",
-                IsLockedOut = await _userManager.IsLockedOutAsync(user)
+                Role = role,
+                IsLockedOut = await _userManager.IsLockedOutAsync(user),
+                InstitutionVerificationStatus = institutionVerificationStatus
             });
         }
 
