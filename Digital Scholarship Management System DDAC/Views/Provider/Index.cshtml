@@ -70,10 +70,18 @@ else
                         </span>
                     </td>
                     <td>@s.Quota</td>
-                    <td>RM @s.AmountPerRecipient</td>
+                    <td>RM @s.AmountPerRecipient.ToString("N2")</td>
                     <td>@(s.ApplicationDeadline?.ToString("yyyy-MM-dd") ?? "-")</td>
-                    <td>
+                    <td class="d-flex gap-1 flex-wrap">
                         <a class="btn btn-sm btn-outline-primary" asp-action="Applications" asp-route-scholarshipId="@s.ScholarshipId">View Applications</a>
+                        @if (s.Status == "Pending" || s.Status == "Rejected")
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="EditScholarship" asp-route-id="@s.ScholarshipId">Edit</a>
+                        }
+                        <form asp-action="DeleteScholarship" asp-route-id="@s.ScholarshipId" method="post"
+                              onsubmit="return confirm('Delete this scholarship listing? This cannot be undone.');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
                     </td>
                 </tr>
                 @if (s.Status == "Rejected" && !string.IsNullOrEmpty(s.RejectionReason))

@@ -236,7 +236,10 @@ public class ProviderController : Controller
             InstitutionName = institution.InstitutionName,
             Description = model.Description,
             MinCgpa = model.MinCgpa,
-            MaxHouseholdIncome = model.MaxHouseholdIncome,
+            // Stored in the shared MaxHouseholdIncome column, but this form
+            // treats it as a minimum-income threshold - Kareshma's Student
+            // matching query is being updated separately to match.
+            MaxHouseholdIncome = model.MinHouseholdIncome,
             RequiredProgram = model.RequiredProgram,
             Quota = model.Quota,
             AmountPerRecipient = model.AmountPerRecipient,
@@ -250,6 +253,116 @@ public class ProviderController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"'{scholarship.Title}' submitted for moderator approval.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // EDIT SCHOLARSHIP LISTING (GET) - only before it's live, so approved/public listings can't be silently changed.
+    public async Task<IActionResult> EditScholarship(int id)
+    {
+        var scholarship = await _context.Scholarships
+            .FirstOrDefaultAsync(s => s.ScholarshipId == id && s.CreatedByUserId == CurrentUserId);
+
+        if (scholarship == null)
+        {
+            return NotFound();
+        }
+
+        if (scholarship.Status != "Pending" && scholarship.Status != "Rejected")
+        {
+            TempData["ErrorMessage"] = "Only listings that are still pending or were rejected can be edited.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = new ScholarshipEditViewModel
+        {
+            ScholarshipId = scholarship.ScholarshipId,
+            Title = scholarship.Title,
+            Description = scholarship.Description,
+            // Rounded to 2dp - the underlying decimal columns carry extra
+            // scale (from EF Core's default precision) that would otherwise
+            // show up as a long string of trailing zeros in these inputs.
+            MinCgpa = scholarship.MinCgpa.HasValue ? Math.Round(scholarship.MinCgpa.Value, 2) : null,
+            MinHouseholdIncome = scholarship.MaxHouseholdIncome.HasValue ? Math.Round(scholarship.MaxHouseholdIncome.Value, 2) : null,
+            RequiredProgram = scholarship.RequiredProgram,
+            Quota = scholarship.Quota,
+            AmountPerRecipient = Math.Round(scholarship.AmountPerRecipient, 2),
+            ApplicationDeadline = scholarship.ApplicationDeadline
+        };
+
+        return View(model);
+    }
+
+    // EDIT SCHOLARSHIP LISTING (POST)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditScholarship(int id, ScholarshipEditViewModel model)
+    {
+        var scholarship = await _context.Scholarships
+            .FirstOrDefaultAsync(s => s.ScholarshipId == id && s.CreatedByUserId == CurrentUserId);
+
+        if (scholarship == null)
+        {
+            return NotFound();
+        }
+
+        if (scholarship.Status != "Pending" && scholarship.Status != "Rejected")
+        {
+            TempData["ErrorMessage"] = "Only listings that are still pending or were rejected can be edited.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.ScholarshipId = id;
+            return View(model);
+        }
+
+        scholarship.Title = model.Title;
+        scholarship.Description = model.Description;
+        scholarship.MinCgpa = model.MinCgpa;
+        scholarship.MaxHouseholdIncome = model.MinHouseholdIncome;
+        scholarship.RequiredProgram = model.RequiredProgram;
+        scholarship.Quota = model.Quota;
+        scholarship.AmountPerRecipient = model.AmountPerRecipient;
+        scholarship.ApplicationDeadline = model.ApplicationDeadline;
+
+        // Edited after a rejection - send it back to Pending for a fresh review.
+        if (scholarship.Status == "Rejected")
+        {
+            scholarship.Status = "Pending";
+            scholarship.RejectionReason = null;
+        }
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"'{scholarship.Title}' updated.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // DELETE SCHOLARSHIP LISTING - only if no student has applied yet, so we never orphan an Application.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteScholarship(int id)
+    {
+        var scholarship = await _context.Scholarships
+            .FirstOrDefaultAsync(s => s.ScholarshipId == id && s.CreatedByUserId == CurrentUserId);
+
+        if (scholarship == null)
+        {
+            return NotFound();
+        }
+
+        bool hasApplications = await _context.Applications.AnyAsync(a => a.ScholarshipId == id);
+        if (hasApplications)
+        {
+            TempData["ErrorMessage"] = "This listing already has applications and can't be deleted.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        _context.Scholarships.Remove(scholarship);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"'{scholarship.Title}' deleted.";
         return RedirectToAction(nameof(Index));
     }
 

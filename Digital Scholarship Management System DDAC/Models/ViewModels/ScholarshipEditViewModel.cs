@@ -2,8 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Digital_Scholarship_Management_System_DDAC.Models.ViewModels;
 
-public class ScholarshipCreateViewModel
+public class ScholarshipEditViewModel
 {
+    public int ScholarshipId { get; set; }
+
     [Required, MaxLength(200)]
     public string Title { get; set; } = string.Empty;
 
