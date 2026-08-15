@@ -27,7 +27,7 @@ public class ProviderController : Controller
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    private async Task<string> SaveRegistrationDocumentAsync(IFormFile file)
+    private async Task<string> SaveUploadedFileAsync(IFormFile file)
     {
         string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
         if (!Directory.Exists(uploadsFolder))
@@ -75,6 +75,13 @@ public class ProviderController : Controller
             return View(model);
         }
 
+        if (!string.IsNullOrWhiteSpace(model.ContactEmail) &&
+            await _context.InstitutionProfiles.AnyAsync(i => i.ContactEmail == model.ContactEmail))
+        {
+            ModelState.AddModelError(nameof(model.ContactEmail), "An institution is already registered with this contact email.");
+            return View(model);
+        }
+
         var user = new ApplicationUser
         {
             UserName = model.Email,
@@ -95,7 +102,7 @@ public class ProviderController : Controller
 
         await _userManager.AddToRoleAsync(user, "Provider");
 
-        string documentPath = await SaveRegistrationDocumentAsync(model.RegistrationDocument!);
+        string documentPath = await SaveUploadedFileAsync(model.RegistrationDocument!);
 
         _context.InstitutionProfiles.Add(new InstitutionProfile
         {
@@ -167,7 +174,14 @@ public class ProviderController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        string documentPath = await SaveRegistrationDocumentAsync(model.RegistrationDocument!);
+        if (!string.IsNullOrWhiteSpace(model.ContactEmail) &&
+            await _context.InstitutionProfiles.AnyAsync(i => i.ContactEmail == model.ContactEmail))
+        {
+            ModelState.AddModelError(nameof(model.ContactEmail), "An institution is already registered with this contact email.");
+            return View(model);
+        }
+
+        string documentPath = await SaveUploadedFileAsync(model.RegistrationDocument!);
 
         var institution = new InstitutionProfile
         {
@@ -243,7 +257,11 @@ public class ProviderController : Controller
             ApplicationDeadline = model.ApplicationDeadline,
             Status = "Pending",
             CreatedByUserId = CurrentUserId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            PolicyFrameworkDocumentPath = await SaveUploadedFileAsync(model.PolicyFrameworkFile!),
+            EligibilityCriteriaDocumentPath = await SaveUploadedFileAsync(model.EligibilityCriteriaFile!),
+            AllocationBudgetDocumentPath = await SaveUploadedFileAsync(model.AllocationBudgetFile!),
+            PrivacyPolicyDocumentPath = await SaveUploadedFileAsync(model.PrivacyPolicyFile!)
         };
 
         _context.Scholarships.Add(scholarship);
@@ -283,7 +301,11 @@ public class ProviderController : Controller
             RequiredProgram = scholarship.RequiredProgram,
             Quota = scholarship.Quota,
             AmountPerRecipient = Math.Round(scholarship.AmountPerRecipient, 2),
-            ApplicationDeadline = scholarship.ApplicationDeadline
+            ApplicationDeadline = scholarship.ApplicationDeadline,
+            CurrentPolicyFrameworkPath = scholarship.PolicyFrameworkDocumentPath,
+            CurrentEligibilityCriteriaPath = scholarship.EligibilityCriteriaDocumentPath,
+            CurrentAllocationBudgetPath = scholarship.AllocationBudgetDocumentPath,
+            CurrentPrivacyPolicyPath = scholarship.PrivacyPolicyDocumentPath
         };
 
         return View(model);
@@ -311,6 +333,10 @@ public class ProviderController : Controller
         if (!ModelState.IsValid)
         {
             model.ScholarshipId = id;
+            model.CurrentPolicyFrameworkPath = scholarship.PolicyFrameworkDocumentPath;
+            model.CurrentEligibilityCriteriaPath = scholarship.EligibilityCriteriaDocumentPath;
+            model.CurrentAllocationBudgetPath = scholarship.AllocationBudgetDocumentPath;
+            model.CurrentPrivacyPolicyPath = scholarship.PrivacyPolicyDocumentPath;
             return View(model);
         }
 
@@ -322,6 +348,24 @@ public class ProviderController : Controller
         scholarship.Quota = model.Quota;
         scholarship.AmountPerRecipient = model.AmountPerRecipient;
         scholarship.ApplicationDeadline = model.ApplicationDeadline;
+
+        // Only replace a document if the provider chose a new file for it.
+        if (model.PolicyFrameworkFile != null)
+        {
+            scholarship.PolicyFrameworkDocumentPath = await SaveUploadedFileAsync(model.PolicyFrameworkFile);
+        }
+        if (model.EligibilityCriteriaFile != null)
+        {
+            scholarship.EligibilityCriteriaDocumentPath = await SaveUploadedFileAsync(model.EligibilityCriteriaFile);
+        }
+        if (model.AllocationBudgetFile != null)
+        {
+            scholarship.AllocationBudgetDocumentPath = await SaveUploadedFileAsync(model.AllocationBudgetFile);
+        }
+        if (model.PrivacyPolicyFile != null)
+        {
+            scholarship.PrivacyPolicyDocumentPath = await SaveUploadedFileAsync(model.PrivacyPolicyFile);
+        }
 
         // Edited after a rejection - send it back to Pending for a fresh review.
         if (scholarship.Status == "Rejected")
@@ -360,6 +404,32 @@ public class ProviderController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"'{scholarship.Title}' deleted.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // CLOSE/EXPIRE SCHOLARSHIP LISTING - marks a live listing as no longer accepting applications.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CloseScholarship(int id)
+    {
+        var scholarship = await _context.Scholarships
+            .FirstOrDefaultAsync(s => s.ScholarshipId == id && s.CreatedByUserId == CurrentUserId);
+
+        if (scholarship == null)
+        {
+            return NotFound();
+        }
+
+        if (scholarship.Status != "Open")
+        {
+            TempData["ErrorMessage"] = "Only open listings can be closed.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        scholarship.Status = "Closed";
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"'{scholarship.Title}' marked as closed/expired.";
         return RedirectToAction(nameof(Index));
     }
 

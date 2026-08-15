@@ -77,6 +77,43 @@
         </div>
     </div>
 
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Supporting Documents</h5>
+            @{
+                bool hasAnyDocument = !string.IsNullOrEmpty(Model.PolicyFrameworkDocumentPath)
+                    || !string.IsNullOrEmpty(Model.EligibilityCriteriaDocumentPath)
+                    || !string.IsNullOrEmpty(Model.AllocationBudgetDocumentPath)
+                    || !string.IsNullOrEmpty(Model.PrivacyPolicyDocumentPath);
+            }
+            @if (!hasAnyDocument)
+            {
+                <p class="text-muted mb-0">No documents uploaded.</p>
+            }
+            else
+            {
+                <ul class="mb-0">
+                    @if (!string.IsNullOrEmpty(Model.PolicyFrameworkDocumentPath))
+                    {
+                        <li><a href="@Model.PolicyFrameworkDocumentPath" target="_blank">Scholarship Policy Framework</a></li>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.EligibilityCriteriaDocumentPath))
+                    {
+                        <li><a href="@Model.EligibilityCriteriaDocumentPath" target="_blank">Eligibility and Assessment Criteria</a></li>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.AllocationBudgetDocumentPath))
+                    {
+                        <li><a href="@Model.AllocationBudgetDocumentPath" target="_blank">Allocation and Disbursement Budget</a></li>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.PrivacyPolicyDocumentPath))
+                    {
+                        <li><a href="@Model.PrivacyPolicyDocumentPath" target="_blank">Data Protection and Privacy Policy</a></li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+
     @if (Model.Status == "Pending")
     {
         <div class="row g-3">

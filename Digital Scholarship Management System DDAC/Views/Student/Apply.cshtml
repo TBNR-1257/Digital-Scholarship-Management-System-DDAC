@@ -15,6 +15,34 @@
                 <h5 class="mb-0 text-primary">@Model.ScholarshipTitle</h5>
             </div>
 
+            @{
+                var scholarship = ViewBag.Scholarship as Digital_Scholarship_Management_System_DDAC.Models.Scholarship;
+            }
+            @if (scholarship != null)
+            {
+                <div class="alert alert-light border mb-4">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-2">Institution's Supporting Documents</small>
+                    <ul class="mb-0 small">
+                        @if (!string.IsNullOrEmpty(scholarship.PolicyFrameworkDocumentPath))
+                        {
+                            <li><a href="@scholarship.PolicyFrameworkDocumentPath" target="_blank">Scholarship Policy Framework</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(scholarship.EligibilityCriteriaDocumentPath))
+                        {
+                            <li><a href="@scholarship.EligibilityCriteriaDocumentPath" target="_blank">Eligibility and Assessment Criteria</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(scholarship.AllocationBudgetDocumentPath))
+                        {
+                            <li><a href="@scholarship.AllocationBudgetDocumentPath" target="_blank">Allocation and Disbursement Budget</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(scholarship.PrivacyPolicyDocumentPath))
+                        {
+                            <li><a href="@scholarship.PrivacyPolicyDocumentPath" target="_blank">Data Protection and Privacy Policy</a></li>
+                        }
+                    </ul>
+                </div>
+            }
+
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <p class="text-muted small">All four documents below are required to submit your application.</p>

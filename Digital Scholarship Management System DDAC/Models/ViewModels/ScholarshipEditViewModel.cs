@@ -39,4 +39,21 @@ public class ScholarshipEditViewModel
     [Display(Name = "Application Deadline")]
     [DataType(DataType.Date)]
     public DateTime? ApplicationDeadline { get; set; }
+
+    // Optional - only replaces the existing document if a new file is chosen.
+    [Display(Name = "Scholarship Policy Framework")]
+    public IFormFile? PolicyFrameworkFile { get; set; }
+    public string? CurrentPolicyFrameworkPath { get; set; }
+
+    [Display(Name = "Eligibility and Assessment Criteria")]
+    public IFormFile? EligibilityCriteriaFile { get; set; }
+    public string? CurrentEligibilityCriteriaPath { get; set; }
+
+    [Display(Name = "Allocation and Disbursement Budget")]
+    public IFormFile? AllocationBudgetFile { get; set; }
+    public string? CurrentAllocationBudgetPath { get; set; }
+
+    [Display(Name = "Data Protection and Privacy Policy")]
+    public IFormFile? PrivacyPolicyFile { get; set; }
+    public string? CurrentPrivacyPolicyPath { get; set; }
 }
