@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ApplicationTrackerViewModel>
+@model IEnumerable<Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ApplicationTrackerViewModel>
 
 @{
     ViewData["Title"] = "Application Status Tracker";
@@ -49,8 +49,7 @@
                                 <th>Scholarship Title</th>
                                 <th>Date Submitted</th>
                                 <th>Application Status</th>
-                                <th>Supporting Document</th>
-                                <th>Document Status</th>
+                                <th>Supporting Documents</th>
                                 <th class="text-center">Actions</th>
                             </tr>
                         </thead>
@@ -83,41 +82,55 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (!string.IsNullOrEmpty(app.DocumentPath))
+                                        @if (!app.Documents.Any())
                                         {
-                                            <a href="@app.DocumentPath" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-file-earmark-pdf me-1"></i>View (@app.DocumentType)
-                                            </a>
+                                            <span class="text-muted">No documents attached</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted">No document attached</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (app.VerificationStatus == "Verified")
-                                        {
-                                            <span class="text-success fw-bold"><i class="bi bi-check-circle me-1"></i>Verified</span>
-                                        }
-                                        else if (app.VerificationStatus == "Rejected")
-                                        {
-                                            <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>Rejected</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted"><i class="bi bi-clock me-1"></i>Pending Review</span>
+                                            <ul class="list-unstyled mb-0 small">
+                                                @foreach (var doc in app.Documents)
+                                                {
+                                                    <li class="mb-1">
+                                                        <a href="@doc.FilePath" target="_blank">
+                                                            <i class="bi bi-file-earmark-pdf me-1"></i>@doc.DocumentTypeLabel
+                                                        </a>
+                                                        @if (doc.VerificationStatus == "Verified")
+                                                        {
+                                                            <span class="text-success"><i class="bi bi-check-circle ms-1"></i></span>
+                                                        }
+                                                        else if (doc.VerificationStatus == "Rejected")
+                                                        {
+                                                            <span class="text-danger"><i class="bi bi-x-circle ms-1"></i></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted"><i class="bi bi-clock ms-1"></i></span>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <!-- Withdraw Button & Form -->
-                                        <form asp-controller="Student" asp-action="WithdrawApplication" method="post"
-                                              onsubmit="return confirm('Are you sure you want to withdraw your application for \'@app.ScholarshipTitle\'? This will permanently delete your application and uploaded document.');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="applicationId" value="@app.ApplicationId" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash me-1"></i>Withdraw
-                                            </button>
-                                        </form>
+                                        <div class="d-flex flex-column gap-1 align-items-center">
+                                            @if (app.CanEdit)
+                                            {
+                                                <a asp-controller="Student" asp-action="EditApplication" asp-route-applicationId="@app.ApplicationId" class="btn btn-sm btn-outline-primary w-100">
+                                                    <i class="bi bi-pencil-square me-1"></i>Edit
+                                                </a>
+                                            }
+
+                                            <!-- Withdraw Button & Form -->
+                                            <form asp-controller="Student" asp-action="WithdrawApplication" method="post" class="w-100"
+                                                  onsubmit="return confirm('Are you sure you want to withdraw your application for \'@app.ScholarshipTitle\'? This will permanently delete your application and uploaded documents.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="applicationId" value="@app.ApplicationId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                                    <i class="bi bi-trash me-1"></i>Withdraw
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             }

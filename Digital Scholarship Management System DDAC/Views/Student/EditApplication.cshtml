@@ -1,13 +1,13 @@
-@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ApplicationSubmissionViewModel
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.ApplicationDocumentEditViewModel
 
 @{
-    ViewData["Title"] = "Submit Scholarship Application";
+    ViewData["Title"] = "Edit Application";
 }
 
 <div class="container mt-4" style="max-width: 700px;">
     <div class="card shadow border-0">
         <div class="card-header bg-primary text-white py-3">
-            <h4 class="mb-0">Scholarship Application</h4>
+            <h4 class="mb-0">Edit Application</h4>
         </div>
         <div class="card-body p-4">
             <div class="alert alert-secondary mb-4">
@@ -15,63 +15,71 @@
                 <h5 class="mb-0 text-primary">@Model.ScholarshipTitle</h5>
             </div>
 
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <p class="text-muted small">
+                Only upload a file for a document you want to replace &mdash; anything left blank keeps the file you already submitted.
+            </p>
 
-            <p class="text-muted small">All four documents below are required to submit your application.</p>
-
-            <form asp-controller="Student" asp-action="SubmitApplication" method="post" enctype="multipart/form-data">
+            <form asp-controller="Student" asp-action="EditApplication" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="ScholarshipId" />
+                <input type="hidden" asp-for="ApplicationId" />
                 <input type="hidden" asp-for="ScholarshipTitle" />
 
                 <div class="mb-3">
                     <label asp-for="TranscriptFile" class="form-label fw-bold">Academic Transcript</label>
+                    <p class="small text-muted mb-1">
+                        Current file: <a href="@Model.CurrentTranscriptFilePath" target="_blank">@(Model.CurrentTranscriptFileName ?? "None")</a>
+                    </p>
                     <div class="input-group">
-                        <input asp-for="TranscriptFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file required />
+                        <input asp-for="TranscriptFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file />
                         <button type="button" class="btn btn-outline-secondary" data-clear-file title="Remove selected file">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <span asp-validation-for="TranscriptFile" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="IncomeProofFile" class="form-label fw-bold">Proof of Household Income</label>
+                    <p class="small text-muted mb-1">
+                        Current file: <a href="@Model.CurrentIncomeProofFilePath" target="_blank">@(Model.CurrentIncomeProofFileName ?? "None")</a>
+                    </p>
                     <div class="input-group">
-                        <input asp-for="IncomeProofFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file required />
+                        <input asp-for="IncomeProofFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file />
                         <button type="button" class="btn btn-outline-secondary" data-clear-file title="Remove selected file">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <span asp-validation-for="IncomeProofFile" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="CertificateFile" class="form-label fw-bold">Achievement Certificate</label>
+                    <p class="small text-muted mb-1">
+                        Current file: <a href="@Model.CurrentCertificateFilePath" target="_blank">@(Model.CurrentCertificateFileName ?? "None")</a>
+                    </p>
                     <div class="input-group">
-                        <input asp-for="CertificateFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file required />
+                        <input asp-for="CertificateFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file />
                         <button type="button" class="btn btn-outline-secondary" data-clear-file title="Remove selected file">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <span asp-validation-for="CertificateFile" class="text-danger"></span>
                 </div>
 
                 <div class="mb-4">
                     <label asp-for="IdCardFile" class="form-label fw-bold">Identity Card</label>
+                    <p class="small text-muted mb-1">
+                        Current file: <a href="@Model.CurrentIdCardFilePath" target="_blank">@(Model.CurrentIdCardFileName ?? "None")</a>
+                    </p>
                     <div class="input-group">
-                        <input asp-for="IdCardFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file required />
+                        <input asp-for="IdCardFile" type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" data-clearable-file />
                         <button type="button" class="btn btn-outline-secondary" data-clear-file title="Remove selected file">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
-                    <span asp-validation-for="IdCardFile" class="text-danger"></span>
                     <div class="form-text">Accepted formats: .pdf, .jpg, .png (Max file size: 5MB each)</div>
                 </div>
 
                 <div class="d-flex justify-content-between pt-2">
-                    <a asp-controller="Student" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-success px-4">Submit Application</button>
+                    <a asp-controller="Student" asp-action="TrackStatus" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success px-4">Save Changes</button>
                 </div>
             </form>
         </div>

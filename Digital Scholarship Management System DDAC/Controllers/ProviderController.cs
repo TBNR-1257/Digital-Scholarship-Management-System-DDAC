@@ -264,27 +264,47 @@ public class ProviderController : Controller
             return NotFound();
         }
 
-        var applications = await (from a in _context.Applications
-                                   where a.ScholarshipId == scholarshipId
-                                   join u in _context.Users on a.StudentId equals u.Id
-                                   join sp in _context.StudentProfiles on a.StudentId equals sp.UserId into profileGroup
-                                   from sp in profileGroup.DefaultIfEmpty()
-                                   join doc in _context.Documents on a.ApplicationId equals doc.ApplicationId into docGroup
-                                   from doc in docGroup.DefaultIfEmpty()
-                                   orderby a.SubmittedAt
-                                   select new ApplicationReviewViewModel
-                                   {
-                                       ApplicationId = a.ApplicationId,
-                                       ScholarshipId = scholarship.ScholarshipId,
-                                       ScholarshipTitle = scholarship.Title,
-                                       Status = a.Status,
-                                       SubmittedAt = a.SubmittedAt,
-                                       StudentName = sp != null ? sp.FullName : u.FullName,
-                                       StudentEmail = u.Email ?? string.Empty,
-                                       DocumentType = doc != null ? doc.DocumentType : null,
-                                       DocumentFileName = doc != null ? doc.FileName : null,
-                                       DocumentPath = doc != null ? doc.FilePath : null
-                                   }).ToListAsync();
+        var applicationRows = await (from a in _context.Applications
+                                      where a.ScholarshipId == scholarshipId
+                                      join u in _context.Users on a.StudentId equals u.Id
+                                      join sp in _context.StudentProfiles on a.StudentId equals sp.UserId into profileGroup
+                                      from sp in profileGroup.DefaultIfEmpty()
+                                      orderby a.SubmittedAt
+                                      select new
+                                      {
+                                          a.ApplicationId,
+                                          a.Status,
+                                          a.SubmittedAt,
+                                          StudentName = sp != null ? sp.FullName : u.FullName,
+                                          StudentEmail = u.Email ?? string.Empty
+                                      }).ToListAsync();
+
+        var applicationIds = applicationRows.Select(a => a.ApplicationId).ToList();
+        var documents = await _context.Documents
+            .Where(d => applicationIds.Contains(d.ApplicationId))
+            .ToListAsync();
+
+        var applications = applicationRows.Select(a => new ApplicationReviewViewModel
+        {
+            ApplicationId = a.ApplicationId,
+            ScholarshipId = scholarship.ScholarshipId,
+            ScholarshipTitle = scholarship.Title,
+            Status = a.Status,
+            SubmittedAt = a.SubmittedAt,
+            StudentName = a.StudentName,
+            StudentEmail = a.StudentEmail,
+            Documents = documents
+                .Where(d => d.ApplicationId == a.ApplicationId)
+                .Select(d => new ApplicationDocumentViewModel
+                {
+                    DocumentId = d.DocumentId,
+                    DocumentType = d.DocumentType,
+                    DocumentTypeLabel = DocumentTypeCatalog.GetLabel(d.DocumentType),
+                    FileName = d.FileName,
+                    FilePath = d.FilePath,
+                    VerificationStatus = d.VerificationStatus
+                }).ToList()
+        }).ToList();
 
         ViewBag.ScholarshipTitle = scholarship.Title;
         ViewBag.ScholarshipId = scholarship.ScholarshipId;
