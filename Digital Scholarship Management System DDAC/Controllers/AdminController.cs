@@ -68,6 +68,40 @@ public class AdminController : Controller
         return View(model);
     }
 
+    public async Task<IActionResult> UserDetails(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "(none)";
+
+        var model = new AdminUserDetailsViewModel
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email ?? string.Empty,
+            PhoneNumber = user.PhoneNumber,
+            Role = role,
+            IsLockedOut = await _userManager.IsLockedOutAsync(user),
+            EmailConfirmed = user.EmailConfirmed
+        };
+
+        if (role == "Student")
+        {
+            model.StudentProfile = await _context.StudentProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        }
+        else if (role == "Provider")
+        {
+            model.InstitutionProfile = await _context.InstitutionProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        }
+
+        return View(model);
+    }
+
     public IActionResult CreateStaffUser()
     {
         return View(new CreateStaffUserViewModel());

@@ -1,0 +1,142 @@
+@model Digital_Scholarship_Management_System_DDAC.Models.ViewModels.AdminUserDetailsViewModel
+
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>User Details</h2>
+        <div>
+            <a asp-controller="Admin" asp-action="EditUserRole" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                <i class="bi bi-pencil-square me-1"></i>Edit Role
+            </a>
+            <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-secondary">Back to Users</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <strong><i class="bi bi-person-badge me-1"></i>Account</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Full Name</dt>
+                <dd class="col-sm-9">@Model.FullName</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@Model.Email</dd>
+
+                <dt class="col-sm-3">Phone Number</dt>
+                <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "-" : Model.PhoneNumber)</dd>
+
+                <dt class="col-sm-3">Role</dt>
+                <dd class="col-sm-9"><span class="badge bg-primary px-3 py-2">@Model.Role</span></dd>
+
+                <dt class="col-sm-3">Account Status</dt>
+                <dd class="col-sm-9">
+                    @if (Model.IsLockedOut)
+                    {
+                        <span class="badge bg-danger px-3 py-2">Disabled</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success px-3 py-2">Active</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Email Confirmed</dt>
+                <dd class="col-sm-9">@(Model.EmailConfirmed ? "Yes" : "No")</dd>
+            </dl>
+        </div>
+    </div>
+
+    @if (Model.StudentProfile != null)
+    {
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <strong><i class="bi bi-mortarboard-fill me-1"></i>Student Profile</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">University</dt>
+                    <dd class="col-sm-9">@Model.StudentProfile.University</dd>
+
+                    <dt class="col-sm-3">Program of Study</dt>
+                    <dd class="col-sm-9">@(Model.StudentProfile.ProgramOfStudy ?? "-")</dd>
+
+                    <dt class="col-sm-3">Year of Study</dt>
+                    <dd class="col-sm-9">@(Model.StudentProfile.YearOfStudy?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-3">Current CGPA</dt>
+                    <dd class="col-sm-9">@Model.StudentProfile.CurrentCGPA.ToString("0.00")</dd>
+
+                    <dt class="col-sm-3">Household Income</dt>
+                    <dd class="col-sm-9">@(Model.StudentProfile.HouseholdIncome?.ToString("C") ?? "-")</dd>
+
+                    <dt class="col-sm-3">Nationality</dt>
+                    <dd class="col-sm-9">@(Model.StudentProfile.Nationality ?? "-")</dd>
+
+                    <dt class="col-sm-3">Phone Number</dt>
+                    <dd class="col-sm-9">@Model.StudentProfile.PhoneNumber</dd>
+                </dl>
+            </div>
+        </div>
+    }
+    else if (Model.Role == "Student")
+    {
+        <div class="alert alert-warning">This student has not completed their profile yet.</div>
+    }
+
+    @if (Model.InstitutionProfile != null)
+    {
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <strong><i class="bi bi-building-fill me-1"></i>Institution Profile</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Institution Name</dt>
+                    <dd class="col-sm-9">@Model.InstitutionProfile.InstitutionName</dd>
+
+                    <dt class="col-sm-3">Contact Email</dt>
+                    <dd class="col-sm-9">@(Model.InstitutionProfile.ContactEmail ?? "-")</dd>
+
+                    <dt class="col-sm-3">Contact Phone</dt>
+                    <dd class="col-sm-9">@(Model.InstitutionProfile.ContactPhone ?? "-")</dd>
+
+                    <dt class="col-sm-3">Registration Document</dt>
+                    <dd class="col-sm-9">
+                        @if (!string.IsNullOrWhiteSpace(Model.InstitutionProfile.RegistrationDocumentPath))
+                        {
+                            <a href="@Model.InstitutionProfile.RegistrationDocumentPath" target="_blank">View Document</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">None uploaded</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-3">Verification Status</dt>
+                    <dd class="col-sm-9"><span class="badge bg-secondary px-3 py-2">@Model.InstitutionProfile.VerificationStatus</span></dd>
+
+                    <dt class="col-sm-3">Moderated At</dt>
+                    <dd class="col-sm-9">@(Model.InstitutionProfile.ModeratedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</dd>
+
+                    <dt class="col-sm-3">Activated At</dt>
+                    <dd class="col-sm-9">@(Model.InstitutionProfile.ActivatedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</dd>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.InstitutionProfile.RejectionReason))
+                    {
+                        <dt class="col-sm-3">Rejection Reason</dt>
+                        <dd class="col-sm-9 text-danger">@Model.InstitutionProfile.RejectionReason</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    }
+    else if (Model.Role == "Provider")
+    {
+        <div class="alert alert-warning">This account has no institution profile on record.</div>
+    }
+</div>
