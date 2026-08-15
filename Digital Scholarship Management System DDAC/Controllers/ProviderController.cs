@@ -15,15 +15,36 @@ public class ProviderController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IWebHostEnvironment _environment;
 
-    public ProviderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+    public ProviderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IWebHostEnvironment environment)
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
+        _environment = environment;
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+    private async Task<string> SaveRegistrationDocumentAsync(IFormFile file)
+    {
+        string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        string uniqueFileName = Guid.NewGuid() + "_" + Path.GetFileName(file.FileName);
+        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        return "/uploads/" + uniqueFileName;
+    }
 
     // PUBLIC SIGN-UP: anyone can apply to become a Scholarship Provider.
     // Creates the login account (Provider role) AND the institution profile
@@ -74,12 +95,15 @@ public class ProviderController : Controller
 
         await _userManager.AddToRoleAsync(user, "Provider");
 
+        string documentPath = await SaveRegistrationDocumentAsync(model.RegistrationDocument!);
+
         _context.InstitutionProfiles.Add(new InstitutionProfile
         {
             UserId = user.Id,
             InstitutionName = model.InstitutionName,
             ContactEmail = model.ContactEmail,
             ContactPhone = model.ContactPhone,
+            RegistrationDocumentPath = documentPath,
             VerificationStatus = "PendingModeratorReview"
         });
         await _context.SaveChangesAsync();
@@ -143,12 +167,15 @@ public class ProviderController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        string documentPath = await SaveRegistrationDocumentAsync(model.RegistrationDocument!);
+
         var institution = new InstitutionProfile
         {
             UserId = CurrentUserId,
             InstitutionName = model.InstitutionName,
             ContactEmail = model.ContactEmail,
             ContactPhone = model.ContactPhone,
+            RegistrationDocumentPath = documentPath,
             VerificationStatus = "PendingModeratorReview"
         };
 

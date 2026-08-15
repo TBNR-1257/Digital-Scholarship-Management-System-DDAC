@@ -7,7 +7,7 @@
 <h1>@ViewData["Title"]</h1>
 <p>Create an account to list scholarships as an institution. Your account and institution details will need to be reviewed by a moderator and activated by an admin before you can create listings.</p>
 
-<form asp-action="SignUp" method="post">
+<form asp-action="SignUp" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <h5 class="mt-4">Account</h5>
@@ -42,6 +42,12 @@
         <label asp-for="ContactPhone" class="form-label"></label>
         <input asp-for="ContactPhone" class="form-control" />
         <span asp-validation-for="ContactPhone" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="RegistrationDocument" class="form-label"></label>
+        <input asp-for="RegistrationDocument" class="form-control" type="file" />
+        <small class="form-text text-muted">Proof of your institution's legitimacy (e.g. registration certificate) for the moderator to review.</small>
+        <span asp-validation-for="RegistrationDocument" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary">Sign Up</button>
