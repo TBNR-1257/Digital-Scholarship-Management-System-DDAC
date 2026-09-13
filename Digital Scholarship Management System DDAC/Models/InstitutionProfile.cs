@@ -20,10 +20,10 @@ public class InstitutionProfile
     // Lifecycle: "PendingModeratorReview", "PendingAdminActivation", "Active", "Rejected"
     public string VerificationStatus { get; set; } = "PendingModeratorReview";
 
-    public string? ModeratedByUserId { get; set; } // Bryan's User ID
+    public string? ModeratedByUserId { get; set; } 
     public DateTime? ModeratedAt { get; set; }
 
-    public string? ActivatedByUserId { get; set; } // Abdul's User ID
+    public string? ActivatedByUserId { get; set; } 
     public DateTime? ActivatedAt { get; set; }
 
     public string? RejectionReason { get; set; }

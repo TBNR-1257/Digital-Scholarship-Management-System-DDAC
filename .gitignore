@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 # Claude Code local session config
 .claude/
+/LambdaDocumentService

@@ -36,7 +36,7 @@ public class ScholarshipModeratorController : Controller
         return View();
     }
 
-    // ============ INSTITUTION VETTING ============
+    // INSTITUTION VETTING
 
     public async Task<IActionResult> Institutions(string? search, string? statusFilter)
     {
@@ -109,7 +109,7 @@ public class ScholarshipModeratorController : Controller
         return RedirectToAction(nameof(Institutions));
     }
 
-    // ============ SCHOLARSHIP LISTING MODERATION ============
+    // SCHOLARSHIP LISTING MODERATION
 
     public async Task<IActionResult> Listings(string? search, string? statusFilter)
     {

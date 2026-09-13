@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Digital_Scholarship_Management_System_DDAC.Data;
 using Digital_Scholarship_Management_System_DDAC.Models;
 using Digital_Scholarship_Management_System_DDAC.Models.ViewModels;
+using Digital_Scholarship_Management_System_DDAC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,42 +16,23 @@ public class ProviderController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IS3Service _s3Service;
 
-    public ProviderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IWebHostEnvironment environment)
+    public ProviderController(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IS3Service s3Service)
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
-        _environment = environment;
+        _s3Service = s3Service;
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    private async Task<string> SaveUploadedFileAsync(IFormFile file)
-    {
-        string uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
-        if (!Directory.Exists(uploadsFolder))
-        {
-            Directory.CreateDirectory(uploadsFolder);
-        }
-
-        string uniqueFileName = Guid.NewGuid() + "_" + Path.GetFileName(file.FileName);
-        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        return "/uploads/" + uniqueFileName;
-    }
-
-    // PUBLIC SIGN-UP: anyone can apply to become a Scholarship Provider.
-    // Creates the login account (Provider role) AND the institution profile
-    // together, both starting in a pending state until Moderator + Admin
-    // approve. Unlike the site's default Register page (which always makes
-    // Student accounts), this is the dedicated entry point for institutions.
+    // PUBLIC SIGN-UP: create provider account & institution profile
     [AllowAnonymous]
     [HttpGet]
     public IActionResult SignUp()
@@ -82,6 +64,14 @@ public class ProviderController : Controller
             return View(model);
         }
 
+        string? documentPath = await _s3Service.UploadFileAsync(model.RegistrationDocument, "provider-documents");
+
+        if (string.IsNullOrEmpty(documentPath))
+        {
+            ModelState.AddModelError(nameof(model.RegistrationDocument), "Registration document upload failed. Please attach a valid file.");
+            return View(model);
+        }
+
         var user = new ApplicationUser
         {
             UserName = model.Email,
@@ -93,6 +83,8 @@ public class ProviderController : Controller
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
         {
+            await _s3Service.DeleteFileAsync(documentPath);
+
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);
@@ -101,8 +93,6 @@ public class ProviderController : Controller
         }
 
         await _userManager.AddToRoleAsync(user, "Provider");
-
-        string documentPath = await SaveUploadedFileAsync(model.RegistrationDocument!);
 
         _context.InstitutionProfiles.Add(new InstitutionProfile
         {
@@ -121,7 +111,7 @@ public class ProviderController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // DASHBOARD: institution status + quick links + a summary of your scholarships.
+    // DASHBOARD
     public async Task<IActionResult> Index()
     {
         var institution = await _context.InstitutionProfiles
@@ -142,7 +132,7 @@ public class ProviderController : Controller
         return View(scholarships);
     }
 
-    // 1. INSTITUTION REGISTRATION (GET)
+    // INSTITUTION REGISTRATION (GET)
     public async Task<IActionResult> Register()
     {
         var existing = await _context.InstitutionProfiles
@@ -156,7 +146,7 @@ public class ProviderController : Controller
         return View(new InstitutionRegisterViewModel());
     }
 
-    // 1. INSTITUTION REGISTRATION (POST)
+    // INSTITUTION REGISTRATION (POST)
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(InstitutionRegisterViewModel model)
@@ -181,7 +171,13 @@ public class ProviderController : Controller
             return View(model);
         }
 
-        string documentPath = await SaveUploadedFileAsync(model.RegistrationDocument!);
+        string? documentPath = await _s3Service.UploadFileAsync(model.RegistrationDocument, "provider-documents");
+
+        if (string.IsNullOrEmpty(documentPath))
+        {
+            ModelState.AddModelError(nameof(model.RegistrationDocument), "Registration document upload failed. Please attach a valid file.");
+            return View(model);
+        }
 
         var institution = new InstitutionProfile
         {
@@ -200,7 +196,7 @@ public class ProviderController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // 2. CREATE SCHOLARSHIP LISTING (GET)
+    // CREATE SCHOLARSHIP LISTING (GET)
     public async Task<IActionResult> CreateScholarship()
     {
         var institution = await _context.InstitutionProfiles
@@ -220,7 +216,7 @@ public class ProviderController : Controller
         return View(new ScholarshipCreateViewModel());
     }
 
-    // 2. CREATE SCHOLARSHIP LISTING (POST)
+    // CREATE SCHOLARSHIP LISTING (POST)
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateScholarship(ScholarshipCreateViewModel model)
@@ -258,10 +254,10 @@ public class ProviderController : Controller
             Status = "Pending",
             CreatedByUserId = CurrentUserId,
             CreatedAt = DateTime.UtcNow,
-            PolicyFrameworkDocumentPath = await SaveUploadedFileAsync(model.PolicyFrameworkFile!),
-            EligibilityCriteriaDocumentPath = await SaveUploadedFileAsync(model.EligibilityCriteriaFile!),
-            AllocationBudgetDocumentPath = await SaveUploadedFileAsync(model.AllocationBudgetFile!),
-            PrivacyPolicyDocumentPath = await SaveUploadedFileAsync(model.PrivacyPolicyFile!)
+            PolicyFrameworkDocumentPath = await _s3Service.UploadFileAsync(model.PolicyFrameworkFile, "scholarship-documents"),
+            EligibilityCriteriaDocumentPath = await _s3Service.UploadFileAsync(model.EligibilityCriteriaFile, "scholarship-documents"),
+            AllocationBudgetDocumentPath = await _s3Service.UploadFileAsync(model.AllocationBudgetFile, "scholarship-documents"),
+            PrivacyPolicyDocumentPath = await _s3Service.UploadFileAsync(model.PrivacyPolicyFile, "scholarship-documents")
         };
 
         _context.Scholarships.Add(scholarship);
@@ -271,7 +267,7 @@ public class ProviderController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // EDIT SCHOLARSHIP LISTING (GET) - only before it's live, so approved/public listings can't be silently changed.
+    // EDIT SCHOLARSHIP LISTING (GET)
     public async Task<IActionResult> EditScholarship(int id)
     {
         var scholarship = await _context.Scholarships
@@ -293,9 +289,6 @@ public class ProviderController : Controller
             ScholarshipId = scholarship.ScholarshipId,
             Title = scholarship.Title,
             Description = scholarship.Description,
-            // Rounded to 2dp - the underlying decimal columns carry extra
-            // scale (from EF Core's default precision) that would otherwise
-            // show up as a long string of trailing zeros in these inputs.
             MinCgpa = scholarship.MinCgpa.HasValue ? Math.Round(scholarship.MinCgpa.Value, 2) : null,
             MaxHouseholdIncome = scholarship.MaxHouseholdIncome.HasValue ? Math.Round(scholarship.MaxHouseholdIncome.Value, 2) : null,
             RequiredProgram = scholarship.RequiredProgram,
@@ -349,25 +342,39 @@ public class ProviderController : Controller
         scholarship.AmountPerRecipient = model.AmountPerRecipient;
         scholarship.ApplicationDeadline = model.ApplicationDeadline;
 
-        // Only replace a document if the provider chose a new file for it.
         if (model.PolicyFrameworkFile != null)
         {
-            scholarship.PolicyFrameworkDocumentPath = await SaveUploadedFileAsync(model.PolicyFrameworkFile);
+            if (!string.IsNullOrEmpty(scholarship.PolicyFrameworkDocumentPath))
+            {
+                await _s3Service.DeleteFileAsync(scholarship.PolicyFrameworkDocumentPath);
+            }
+            scholarship.PolicyFrameworkDocumentPath = await _s3Service.UploadFileAsync(model.PolicyFrameworkFile, "scholarship-documents");
         }
         if (model.EligibilityCriteriaFile != null)
         {
-            scholarship.EligibilityCriteriaDocumentPath = await SaveUploadedFileAsync(model.EligibilityCriteriaFile);
+            if (!string.IsNullOrEmpty(scholarship.EligibilityCriteriaDocumentPath))
+            {
+                await _s3Service.DeleteFileAsync(scholarship.EligibilityCriteriaDocumentPath);
+            }
+            scholarship.EligibilityCriteriaDocumentPath = await _s3Service.UploadFileAsync(model.EligibilityCriteriaFile, "scholarship-documents");
         }
         if (model.AllocationBudgetFile != null)
         {
-            scholarship.AllocationBudgetDocumentPath = await SaveUploadedFileAsync(model.AllocationBudgetFile);
+            if (!string.IsNullOrEmpty(scholarship.AllocationBudgetDocumentPath))
+            {
+                await _s3Service.DeleteFileAsync(scholarship.AllocationBudgetDocumentPath);
+            }
+            scholarship.AllocationBudgetDocumentPath = await _s3Service.UploadFileAsync(model.AllocationBudgetFile, "scholarship-documents");
         }
         if (model.PrivacyPolicyFile != null)
         {
-            scholarship.PrivacyPolicyDocumentPath = await SaveUploadedFileAsync(model.PrivacyPolicyFile);
+            if (!string.IsNullOrEmpty(scholarship.PrivacyPolicyDocumentPath))
+            {
+                await _s3Service.DeleteFileAsync(scholarship.PrivacyPolicyDocumentPath);
+            }
+            scholarship.PrivacyPolicyDocumentPath = await _s3Service.UploadFileAsync(model.PrivacyPolicyFile, "scholarship-documents");
         }
 
-        // Edited after a rejection - send it back to Pending for a fresh review.
         if (scholarship.Status == "Rejected")
         {
             scholarship.Status = "Pending";
@@ -380,7 +387,7 @@ public class ProviderController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // DELETE SCHOLARSHIP LISTING - only if no student has applied yet, so we never orphan an Application.
+    // DELETE SCHOLARSHIP LISTING
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteScholarship(int id)
@@ -400,6 +407,15 @@ public class ProviderController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        if (!string.IsNullOrEmpty(scholarship.PolicyFrameworkDocumentPath))
+            await _s3Service.DeleteFileAsync(scholarship.PolicyFrameworkDocumentPath);
+        if (!string.IsNullOrEmpty(scholarship.EligibilityCriteriaDocumentPath))
+            await _s3Service.DeleteFileAsync(scholarship.EligibilityCriteriaDocumentPath);
+        if (!string.IsNullOrEmpty(scholarship.AllocationBudgetDocumentPath))
+            await _s3Service.DeleteFileAsync(scholarship.AllocationBudgetDocumentPath);
+        if (!string.IsNullOrEmpty(scholarship.PrivacyPolicyDocumentPath))
+            await _s3Service.DeleteFileAsync(scholarship.PrivacyPolicyDocumentPath);
+
         _context.Scholarships.Remove(scholarship);
         await _context.SaveChangesAsync();
 
@@ -407,7 +423,7 @@ public class ProviderController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // CLOSE/EXPIRE SCHOLARSHIP LISTING - marks a live listing as no longer accepting applications.
+    // CLOSE SCHOLARSHIP LISTING
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CloseScholarship(int id)
@@ -433,66 +449,109 @@ public class ProviderController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // 3. VIEW APPLICATIONS for one of your scholarships
-    public async Task<IActionResult> Applications(int scholarshipId)
+    // VIEW APPLICATIONS
+    public async Task<IActionResult> Applications(int? id, int? scholarshipId)
     {
+        // Resolve ID regardless of whether route passed 'id' or 'scholarshipId'
+        int targetScholarshipId = id ?? scholarshipId ?? 0;
+
+        if (targetScholarshipId == 0)
+        {
+            return NotFound();
+        }
+
         var scholarship = await _context.Scholarships
-            .FirstOrDefaultAsync(s => s.ScholarshipId == scholarshipId && s.CreatedByUserId == CurrentUserId);
+            .FirstOrDefaultAsync(s => s.ScholarshipId == targetScholarshipId && s.CreatedByUserId == CurrentUserId);
 
         if (scholarship == null)
         {
             return NotFound();
         }
 
-        var applicationRows = await (from a in _context.Applications
-                                      where a.ScholarshipId == scholarshipId
-                                      join u in _context.Users on a.StudentId equals u.Id
-                                      join sp in _context.StudentProfiles on a.StudentId equals sp.UserId into profileGroup
-                                      from sp in profileGroup.DefaultIfEmpty()
-                                      orderby a.SubmittedAt
-                                      select new
-                                      {
-                                          a.ApplicationId,
-                                          a.Status,
-                                          a.SubmittedAt,
-                                          StudentName = sp != null ? sp.FullName : u.FullName,
-                                          StudentEmail = u.Email ?? string.Empty
-                                      }).ToListAsync();
+        ViewBag.ScholarshipTitle = scholarship.Title;
+        ViewBag.ScholarshipId = scholarship.ScholarshipId;
 
-        var applicationIds = applicationRows.Select(a => a.ApplicationId).ToList();
+        var applicationsList = await _context.Applications
+            .Where(a => a.ScholarshipId == targetScholarshipId &&
+                        a.Status != null &&
+                        a.Status.ToLower() != "draft")
+            .OrderByDescending(a => a.SubmittedAt ?? DateTime.MinValue)
+            .ToListAsync();
+
+        if (!applicationsList.Any())
+        {
+            return View(new List<ApplicationReviewViewModel>());
+        }
+
+        var studentIds = applicationsList.Select(a => a.StudentId).Distinct().ToList();
+
+        var users = await _context.Users
+            .Where(u => studentIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id);
+
+        var studentProfiles = await _context.StudentProfiles
+            .Where(sp => studentIds.Contains(sp.UserId))
+            .ToDictionaryAsync(sp => sp.UserId);
+
+        // Load Documents
+        var applicationIds = applicationsList.Select(a => a.ApplicationId).ToList();
         var documents = await _context.Documents
             .Where(d => applicationIds.Contains(d.ApplicationId))
             .ToListAsync();
 
-        var applications = applicationRows.Select(a => new ApplicationReviewViewModel
+        var applicationViewModels = new List<ApplicationReviewViewModel>();
+
+        foreach (var app in applicationsList)
         {
-            ApplicationId = a.ApplicationId,
-            ScholarshipId = scholarship.ScholarshipId,
-            ScholarshipTitle = scholarship.Title,
-            Status = a.Status,
-            SubmittedAt = a.SubmittedAt,
-            StudentName = a.StudentName,
-            StudentEmail = a.StudentEmail,
-            Documents = documents
-                .Where(d => d.ApplicationId == a.ApplicationId)
-                .Select(d => new ApplicationDocumentViewModel
+            users.TryGetValue(app.StudentId, out var user);
+            studentProfiles.TryGetValue(app.StudentId, out var profile);
+
+            var appDocs = documents.Where(d => d.ApplicationId == app.ApplicationId).ToList();
+            var docViewModels = new List<ApplicationDocumentViewModel>();
+
+            foreach (var doc in appDocs)
+            {
+                docViewModels.Add(new ApplicationDocumentViewModel
                 {
-                    DocumentId = d.DocumentId,
-                    DocumentType = d.DocumentType,
-                    DocumentTypeLabel = DocumentTypeCatalog.GetLabel(d.DocumentType),
-                    FileName = d.FileName,
-                    FilePath = d.FilePath,
-                    VerificationStatus = d.VerificationStatus
-                }).ToList()
-        }).ToList();
+                    DocumentId = doc.DocumentId,
+                    DocumentType = doc.DocumentType,
+                    DocumentTypeLabel = DocumentTypeCatalog.GetLabel(doc.DocumentType),
+                    FileName = doc.FileName,
+                    FilePath = await GetAccessibleDocumentUrlAsync(doc.FilePath),
+                    VerificationStatus = doc.VerificationStatus
+                });
+            }
 
-        ViewBag.ScholarshipTitle = scholarship.Title;
-        ViewBag.ScholarshipId = scholarship.ScholarshipId;
+            applicationViewModels.Add(new ApplicationReviewViewModel
+            {
+                ApplicationId = app.ApplicationId,
+                ScholarshipId = scholarship.ScholarshipId,
+                ScholarshipTitle = scholarship.Title,
+                Status = app.Status,
+                SubmittedAt = app.SubmittedAt,
+                StudentName = !string.IsNullOrWhiteSpace(profile?.FullName) ? profile.FullName : (!string.IsNullOrWhiteSpace(user?.FullName) ? user.FullName : "Student"),
+                StudentEmail = user?.Email ?? string.Empty,
+                Documents = docViewModels
+            });
+        }
 
-        return View(applications);
+        return View(applicationViewModels);
     }
 
-    // 3. APPROVE/REJECT an application, notifying the student.
+    private async Task<string> GetAccessibleDocumentUrlAsync(string? filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return "#";
+
+        try
+        {
+            return await Task.FromResult(filePath);
+        }
+        catch
+        {
+            return filePath;
+        }
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Decide(int applicationId, string decision, string? reason)
@@ -510,7 +569,6 @@ public class ProviderController : Controller
 
         if (scholarship == null)
         {
-            // Not your scholarship - not authorized to decide on it.
             return Forbid();
         }
 
@@ -547,4 +605,5 @@ public class ProviderController : Controller
         TempData["SuccessMessage"] = $"Application {decision.ToLower()} and student notified.";
         return RedirectToAction(nameof(Applications), new { scholarshipId = scholarship.ScholarshipId });
     }
+
 }

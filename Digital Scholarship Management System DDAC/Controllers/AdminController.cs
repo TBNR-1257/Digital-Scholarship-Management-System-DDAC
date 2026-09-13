@@ -246,7 +246,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Users));
     }
 
-    // ---- Institution Activation ----
+    // Institution Activation
 
     public async Task<IActionResult> Institutions(string? statusFilter)
     {

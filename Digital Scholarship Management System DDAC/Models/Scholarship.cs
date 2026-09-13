@@ -19,21 +19,18 @@ public class Scholarship
     public decimal AmountPerRecipient { get; set; }
     public DateTime? ApplicationDeadline { get; set; }
 
-    // Status lifecycle: "Pending", "Open", "Rejected", "Closed"
+    // "Pending", "Open", "Rejected", "Closed"
     public string Status { get; set; } = "Pending";
 
     [Required]
-    public string CreatedByUserId { get; set; } = string.Empty; // Shamel's User ID
+    public string CreatedByUserId { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Optional Admin/Moderator Audit Tracking Fields
-    public string? ApprovedByUserId { get; set; } // Bryan's User ID
+    public string? ApprovedByUserId { get; set; } 
     public DateTime? DecisionAt { get; set; }
     public string? RejectionReason { get; set; }
 
-    // 4 required supporting documents, set once at creation. Viewable by
-    // Moderator (approval), Student (before applying), and the Provider.
     public string? PolicyFrameworkDocumentPath { get; set; }
     public string? EligibilityCriteriaDocumentPath { get; set; }
     public string? AllocationBudgetDocumentPath { get; set; }
