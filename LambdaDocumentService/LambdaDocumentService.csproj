@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,84 +9,11 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <!-- Generate ready to run images during publishing to improve cold start time. -->
     <PublishReadyToRun>true</PublishReadyToRun>
-    <ProjectGuid>{E800A4A7-8E7B-669C-35EF-F971A22BC935}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="3.0.1" />
-    <PackageReference Include="Amazon.Lambda.Core" Version="2.8.0" />
-    <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.4" />
+    <PackageReference Include="Amazon.Lambda.Core" Version="3.3.0" />
+    <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="3.0.1" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.103.2" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="aws-lambda-tools-defaults.json" />
-    <None Include="bin\Release\net10.0\LambdaDocumentService.zip" />
-    <None Include="bin\Release\net10.0\linux-x64\LambdaDocumentService.deps.json" />
-    <None Include="bin\Release\net10.0\linux-x64\LambdaDocumentService.runtimeconfig.json" />
-    <None Include="bin\Release\net10.0\publish\LambdaDocumentService.deps.json" />
-    <None Include="bin\Release\net10.0\publish\LambdaDocumentService.runtimeconfig.json" />
-    <None Include="obj\Debug\net10.0\DesignTimeResolveAssemblyReferencesInput.cache" />
-    <None Include="obj\Debug\net10.0\LambdaDocumentService.AssemblyInfoInputs.cache" />
-    <None Include="obj\Debug\net10.0\LambdaDocumentService.assets.cache" />
-    <None Include="obj\Debug\net10.0\LambdaDocumentService.csproj.AssemblyReference.cache" />
-    <None Include="obj\Debug\net10.0\LambdaDocumentService.GeneratedMSBuildEditorConfig.editorconfig" />
-    <None Include="obj\Debug\net10.0\LambdaDocumentService.sourcelink.json" />
-    <None Include="obj\LambdaDocumentService.csproj.nuget.dgspec.json" />
-    <None Include="obj\LambdaDocumentService.csproj.nuget.g.props" />
-    <None Include="obj\LambdaDocumentService.csproj.nuget.g.targets" />
-    <None Include="obj\project.assets.json" />
-    <None Include="obj\project.nuget.cache" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDo.470C539C.Up2Date" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.AssemblyInfoInputs.cache" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.assets.cache" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.csproj.AssemblyReference.cache" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.csproj.CoreCompileInputs.cache" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.GeneratedMSBuildEditorConfig.editorconfig" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.genruntimeconfig.cache" />
-    <None Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.sourcelink.json" />
-    <None Include="Properties\launchSettings.json" />
-    <None Include="Readme.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="bin\Release\net10.0\linux-x64\Amazon.Lambda.APIGatewayEvents.dll" />
-    <Content Include="bin\Release\net10.0\linux-x64\Amazon.Lambda.Core.dll" />
-    <Content Include="bin\Release\net10.0\linux-x64\Amazon.Lambda.Serialization.SystemTextJson.dll" />
-    <Content Include="bin\Release\net10.0\linux-x64\AWSSDK.Core.dll" />
-    <Content Include="bin\Release\net10.0\linux-x64\AWSSDK.S3.dll" />
-    <Content Include="bin\Release\net10.0\linux-x64\LambdaDocumentService.dll" />
-    <Content Include="bin\Release\net10.0\linux-x64\LambdaDocumentService.pdb" />
-    <Content Include="bin\Release\net10.0\publish\Amazon.Lambda.APIGatewayEvents.dll" />
-    <Content Include="bin\Release\net10.0\publish\Amazon.Lambda.Core.dll" />
-    <Content Include="bin\Release\net10.0\publish\Amazon.Lambda.Serialization.SystemTextJson.dll" />
-    <Content Include="bin\Release\net10.0\publish\AWSSDK.Core.dll" />
-    <Content Include="bin\Release\net10.0\publish\AWSSDK.S3.dll" />
-    <Content Include="bin\Release\net10.0\publish\LambdaDocumentService.dll" />
-    <Content Include="bin\Release\net10.0\publish\LambdaDocumentService.pdb" />
-    <Content Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.csproj.FileListAbsolute.txt" />
-    <Content Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.pdb" />
-    <Content Include="obj\Release\net10.0\linux-x64\PublishOutputs.d494016cf1.txt" />
-    <Content Include="obj\Release\net10.0\linux-x64\R2R\Amazon.Lambda.APIGatewayEvents.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\R2R\Amazon.Lambda.Core.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\R2R\Amazon.Lambda.Serialization.SystemTextJson.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\R2R\AWSSDK.Core.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\R2R\AWSSDK.S3.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\R2R\LambdaDocumentService.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\refint\LambdaDocumentService.dll" />
-    <Content Include="obj\Release\net10.0\linux-x64\ref\LambdaDocumentService.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Function.cs" />
-    <Compile Include="obj\Debug\net10.0\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs" />
-    <Compile Include="obj\Debug\net10.0\LambdaDocumentService.AssemblyInfo.cs" />
-    <Compile Include="obj\Debug\net10.0\LambdaDocumentService.GlobalUsings.g.cs" />
-    <Compile Include="obj\Release\net10.0\linux-x64\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs" />
-    <Compile Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.AssemblyInfo.cs" />
-    <Compile Include="obj\Release\net10.0\linux-x64\LambdaDocumentService.GlobalUsings.g.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="bin\Debug\net10.0\" />
-    <Folder Include="obj\Debug\net10.0\refint\" />
-    <Folder Include="obj\Debug\net10.0\ref\" />
-    <Folder Include="obj\Debug\net10.0\TempPE\" />
   </ItemGroup>
 </Project>

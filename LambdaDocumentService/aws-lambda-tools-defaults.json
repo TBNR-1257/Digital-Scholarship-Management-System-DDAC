@@ -21,6 +21,6 @@
   "function-subnets": "",
   "function-security-groups": "",
   "tracing-mode": "PassThrough",
-  "environment-variables": "",
+  "environment-variables": "\u0022S3_BUCKET_NAME\u0022=\u0022scholarshipsystem-documents-g4\u0022",
   "image-tag": ""
 }

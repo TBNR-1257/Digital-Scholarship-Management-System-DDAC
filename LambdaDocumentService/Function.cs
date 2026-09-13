@@ -11,7 +11,7 @@ using Amazon.S3.Model;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
-namespace LambdaDocumentService; 
+namespace LambdaDocumentService;
 
 public class Function
 {
@@ -28,7 +28,6 @@ public class Function
         try
         {
             string method = request.HttpMethod ?? "GET";
-
             string path = request.PathParameters != null && request.PathParameters.TryGetValue("proxy", out var p)
                 ? "/" + p
                 : request.Path ?? "/";

@@ -20,8 +20,14 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
 // Register S3 Upload Service
-builder.Services.AddScoped<IS3Service, S3Service>();
+builder.Services.AddHttpClient<IS3Service, S3LambdaClientService>(client =>
+{
+    var documentServiceUrl = builder.Configuration["DocumentService:BaseUrl"]
+        ?? throw new InvalidOperationException("DocumentService:BaseUrl not configured");
+    client.BaseAddress = new Uri(documentServiceUrl);
+});
 
 var app = builder.Build();
 
