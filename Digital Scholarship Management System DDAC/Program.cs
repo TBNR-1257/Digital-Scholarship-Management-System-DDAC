@@ -1,6 +1,8 @@
 using Digital_Scholarship_Management_System_DDAC.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Digital_Scholarship_Management_System_DDAC.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+// Register S3 Upload Service
+builder.Services.AddScoped<IS3Service, S3Service>();
 
 var app = builder.Build();
 
