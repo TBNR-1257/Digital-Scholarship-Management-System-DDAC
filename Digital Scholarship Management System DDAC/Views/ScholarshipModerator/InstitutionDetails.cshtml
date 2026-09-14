@@ -27,9 +27,9 @@
 
                 <dt class="col-sm-4">Registration Document</dt>
                 <dd class="col-sm-8">
-                    @if (!string.IsNullOrEmpty(Model.RegistrationDocumentPath))
+                    @if (!string.IsNullOrEmpty(Model.RegistrationDocumentPath) && ViewBag.RegistrationDocumentUrl != null)
                     {
-                        <a href="@Model.RegistrationDocumentPath" target="_blank">View Document</a>
+                        <a href="@ViewBag.RegistrationDocumentUrl" target="_blank">View Document</a>
                     }
                     else
                     {

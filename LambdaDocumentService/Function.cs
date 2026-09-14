@@ -28,6 +28,7 @@ public class Function
         try
         {
             string method = request.HttpMethod ?? "GET";
+
             string path = request.PathParameters != null && request.PathParameters.TryGetValue("proxy", out var p)
                 ? "/" + p
                 : request.Path ?? "/";
@@ -38,6 +39,7 @@ public class Function
             {
                 ("GET", "/health") => Ok(new { status = "ok", service = "ScholarshipDocumentService" }),
                 ("POST", "/presign-upload") => HandlePresignUpload(request),
+                ("POST", "/presign-download") => HandlePresignDownload(request),
                 ("POST", "/delete") => await HandleDelete(request),
                 _ => NotFound()
             };
@@ -73,6 +75,35 @@ public class Function
         string fileUrl = $"https://{BucketName}.s3.{region}.amazonaws.com/{objectKey}";
 
         return Ok(new { uploadUrl, fileUrl });
+    }
+
+    // generates a short-lived GET URL so the app can actually display/download a stored document.
+    private APIGatewayProxyResponse HandlePresignDownload(APIGatewayProxyRequest request)
+    {
+        var body = JsonSerializer.Deserialize<PresignDownloadRequest>(request.Body ?? "{}", JsonOptions);
+        if (body == null || string.IsNullOrWhiteSpace(body.FileUrl))
+            return BadRequest("fileUrl is required.");
+
+        try
+        {
+            var uri = new Uri(body.FileUrl);
+            string objectKey = uri.AbsolutePath.TrimStart('/');
+
+            var presignRequest = new GetPreSignedUrlRequest
+            {
+                BucketName = BucketName,
+                Key = objectKey,
+                Verb = HttpVerb.GET,
+                Expires = DateTime.UtcNow.AddMinutes(15)
+            };
+
+            string viewUrl = S3Client.GetPreSignedURL(presignRequest);
+            return Ok(new { viewUrl });
+        }
+        catch (Exception ex)
+        {
+            return Error(ex.Message);
+        }
     }
 
     private async Task<APIGatewayProxyResponse> HandleDelete(APIGatewayProxyRequest request)
@@ -132,5 +163,6 @@ public class Function
     };
 
     private record PresignUploadRequest(string FileName, string? FolderName, string? ContentType);
+    private record PresignDownloadRequest(string FileUrl);
     private record DeleteRequest(string FileUrl);
 }

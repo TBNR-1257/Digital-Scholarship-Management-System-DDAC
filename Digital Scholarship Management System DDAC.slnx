@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="Digital Scholarship Management System DDAC/Digital Scholarship Management System DDAC.csproj" />
   <Project Path="LambdaDocumentService/LambdaDocumentService.csproj" />
+  <Project Path="PublishNotificationFunction/PublishNotificationFunction.csproj" />
+  <Project Path="SubscribeNotificationFunction/SubscribeNotificationFunction.csproj" />
 </Solution>

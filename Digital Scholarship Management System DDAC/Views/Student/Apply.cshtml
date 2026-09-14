@@ -23,21 +23,21 @@
                 <div class="alert alert-light border mb-4">
                     <small class="text-uppercase text-muted fw-bold d-block mb-2">Institution's Supporting Documents</small>
                     <ul class="mb-0 small">
-                        @if (!string.IsNullOrEmpty(scholarship.PolicyFrameworkDocumentPath))
+                        @if (!string.IsNullOrEmpty(scholarship.PolicyFrameworkDocumentPath) && ViewBag.PolicyFrameworkUrl != null)
                         {
-                            <li><a href="@scholarship.PolicyFrameworkDocumentPath" target="_blank">Scholarship Policy Framework</a></li>
+                            <li><a href="@ViewBag.PolicyFrameworkUrl" target="_blank">Scholarship Policy Framework</a></li>
                         }
-                        @if (!string.IsNullOrEmpty(scholarship.EligibilityCriteriaDocumentPath))
+                        @if (!string.IsNullOrEmpty(scholarship.EligibilityCriteriaDocumentPath) && ViewBag.EligibilityCriteriaUrl != null)
                         {
-                            <li><a href="@scholarship.EligibilityCriteriaDocumentPath" target="_blank">Eligibility and Assessment Criteria</a></li>
+                            <li><a href="@ViewBag.EligibilityCriteriaUrl" target="_blank">Eligibility and Assessment Criteria</a></li>
                         }
-                        @if (!string.IsNullOrEmpty(scholarship.AllocationBudgetDocumentPath))
+                        @if (!string.IsNullOrEmpty(scholarship.AllocationBudgetDocumentPath) && ViewBag.AllocationBudgetUrl != null)
                         {
-                            <li><a href="@scholarship.AllocationBudgetDocumentPath" target="_blank">Allocation and Disbursement Budget</a></li>
+                            <li><a href="@ViewBag.AllocationBudgetUrl" target="_blank">Allocation and Disbursement Budget</a></li>
                         }
-                        @if (!string.IsNullOrEmpty(scholarship.PrivacyPolicyDocumentPath))
+                        @if (!string.IsNullOrEmpty(scholarship.PrivacyPolicyDocumentPath) && ViewBag.PrivacyPolicyUrl != null)
                         {
-                            <li><a href="@scholarship.PrivacyPolicyDocumentPath" target="_blank">Data Protection and Privacy Policy</a></li>
+                            <li><a href="@ViewBag.PrivacyPolicyUrl" target="_blank">Data Protection and Privacy Policy</a></li>
                         }
                     </ul>
                 </div>

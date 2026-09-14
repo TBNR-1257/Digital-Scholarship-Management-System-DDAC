@@ -26,7 +26,21 @@ builder.Services.AddHttpClient<IS3Service, S3LambdaClientService>(client =>
 {
     var documentServiceUrl = builder.Configuration["DocumentService:BaseUrl"]
         ?? throw new InvalidOperationException("DocumentService:BaseUrl not configured");
+
+    if (!documentServiceUrl.EndsWith("/")) documentServiceUrl += "/";
+
     client.BaseAddress = new Uri(documentServiceUrl);
+});
+
+// Register Notification Service
+builder.Services.AddHttpClient<INotificationService, NotificationServiceClient>(client =>
+{
+    var notificationServiceUrl = builder.Configuration["NotificationService:BaseUrl"]
+        ?? throw new InvalidOperationException("NotificationService:BaseUrl not configured");
+
+    if (!notificationServiceUrl.EndsWith("/")) notificationServiceUrl += "/";
+
+    client.BaseAddress = new Uri(notificationServiceUrl);
 });
 
 var app = builder.Build();

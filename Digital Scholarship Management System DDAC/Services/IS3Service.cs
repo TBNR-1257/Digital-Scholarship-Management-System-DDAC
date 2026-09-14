@@ -6,4 +6,5 @@ public interface IS3Service
 {
     Task<string?> UploadFileAsync(IFormFile? file, string folderName = "uploads");
     Task<bool> DeleteFileAsync(string? fileUrl);
+    Task<string?> GetViewUrlAsync(string? fileUrl);
 }

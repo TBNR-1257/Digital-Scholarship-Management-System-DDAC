@@ -1,6 +1,7 @@
 using Digital_Scholarship_Management_System_DDAC.Data;
 using Digital_Scholarship_Management_System_DDAC.Models;
 using Digital_Scholarship_Management_System_DDAC.Models.ViewModels;
+using Digital_Scholarship_Management_System_DDAC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,21 @@ public class AdminController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
+    private readonly IS3Service _s3Service;
 
-    public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
+    public AdminController(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        ApplicationDbContext context,
+        INotificationService notificationService,
+        IS3Service s3Service)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
+        _notificationService = notificationService;
+        _s3Service = s3Service;
     }
 
     public IActionResult Index()
@@ -107,6 +117,11 @@ public class AdminController : Controller
         else if (role == "Provider")
         {
             model.InstitutionProfile = await _context.InstitutionProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+
+            if (model.InstitutionProfile != null && !string.IsNullOrWhiteSpace(model.InstitutionProfile.RegistrationDocumentPath))
+            {
+                ViewBag.RegistrationDocumentUrl = await _s3Service.GetViewUrlAsync(model.InstitutionProfile.RegistrationDocumentPath);
+            }
         }
 
         return View(model);
@@ -296,7 +311,20 @@ public class AdminController : Controller
         institution.VerificationStatus = "Active";
         institution.ActivatedByUserId = _userManager.GetUserId(User);
         institution.ActivatedAt = DateTime.UtcNow;
+
+        string message = $"Your institution '{institution.InstitutionName}' has been activated. You can now create scholarship listings.";
+
+        _context.Notifications.Add(new Notification
+        {
+            UserId = institution.UserId,
+            Message = message,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _context.SaveChangesAsync();
+
+        await _notificationService.PublishAsync("Institution Activated", message);
 
         TempData["StatusMessage"] = $"\"{institution.InstitutionName}\" has been activated.";
         return RedirectToAction(nameof(Institutions));
@@ -339,7 +367,20 @@ public class AdminController : Controller
         institution.RejectionReason = model.RejectionReason;
         institution.ActivatedByUserId = _userManager.GetUserId(User);
         institution.ActivatedAt = DateTime.UtcNow;
+
+        string message = $"Your institution '{institution.InstitutionName}' registration was rejected during final review. Reason: {model.RejectionReason}";
+
+        _context.Notifications.Add(new Notification
+        {
+            UserId = institution.UserId,
+            Message = message,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        });
+
         await _context.SaveChangesAsync();
+
+        await _notificationService.PublishAsync("Institution Registration Rejected", message);
 
         TempData["StatusMessage"] = $"\"{institution.InstitutionName}\" was rejected.";
         return RedirectToAction(nameof(Institutions));

@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Http;
 
 namespace Digital_Scholarship_Management_System_DDAC.Services;
 
-// Implements the same IS3Service contract as the old S3Service, but delegates the actual
-// S3 permission logic to the ScholarshipDocumentService Lambda (via API Gateway)
 public class S3LambdaClientService : IS3Service
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
@@ -22,7 +20,6 @@ public class S3LambdaClientService : IS3Service
     {
         if (file == null || file.Length == 0) return null;
 
-        // 1. Ask the Document microservice for a presigned S3 upload URL.
         var presignPayload = new
         {
             fileName = file.FileName,
@@ -40,7 +37,6 @@ public class S3LambdaClientService : IS3Service
         var presignResult = JsonSerializer.Deserialize<PresignUploadResult>(presignJson, JsonOptions);
         if (presignResult == null || string.IsNullOrEmpty(presignResult.UploadUrl)) return null;
 
-        // 2. Upload the actual bytes straight to S3 using the presigned URL (does not go through Lambda).
         using var fileStream = file.OpenReadStream();
         using var fileContent = new StreamContent(fileStream);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(
@@ -68,6 +64,24 @@ public class S3LambdaClientService : IS3Service
         return result?.Success ?? false;
     }
 
+    // asks the Lambda for a short-lived GET URL so a stored document can actually be viewed.
+    public async Task<string?> GetViewUrlAsync(string? fileUrl)
+    {
+        if (string.IsNullOrEmpty(fileUrl)) return null;
+
+        var payload = new { fileUrl };
+        using var requestBody = new StringContent(
+            JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+        var response = await _documentServiceClient.PostAsync("presign-download", requestBody);
+        if (!response.IsSuccessStatusCode) return null;
+
+        var json = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<ViewUrlResult>(json, JsonOptions);
+        return result?.ViewUrl;
+    }
+
     private record PresignUploadResult(string UploadUrl, string FileUrl);
     private record DeleteResult(bool Success);
+    private record ViewUrlResult(string ViewUrl);
 }

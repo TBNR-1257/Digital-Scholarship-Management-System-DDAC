@@ -17,17 +17,20 @@ public class ProviderController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IS3Service _s3Service;
+    private readonly INotificationService _notificationService;
 
     public ProviderController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IS3Service s3Service)
+        IS3Service s3Service,
+        INotificationService notificationService)
     {
         _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
         _s3Service = s3Service;
+        _notificationService = notificationService;
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -295,10 +298,10 @@ public class ProviderController : Controller
             Quota = scholarship.Quota,
             AmountPerRecipient = Math.Round(scholarship.AmountPerRecipient, 2),
             ApplicationDeadline = scholarship.ApplicationDeadline,
-            CurrentPolicyFrameworkPath = scholarship.PolicyFrameworkDocumentPath,
-            CurrentEligibilityCriteriaPath = scholarship.EligibilityCriteriaDocumentPath,
-            CurrentAllocationBudgetPath = scholarship.AllocationBudgetDocumentPath,
-            CurrentPrivacyPolicyPath = scholarship.PrivacyPolicyDocumentPath
+            CurrentPolicyFrameworkPath = await _s3Service.GetViewUrlAsync(scholarship.PolicyFrameworkDocumentPath) ?? scholarship.PolicyFrameworkDocumentPath,
+            CurrentEligibilityCriteriaPath = await _s3Service.GetViewUrlAsync(scholarship.EligibilityCriteriaDocumentPath) ?? scholarship.EligibilityCriteriaDocumentPath,
+            CurrentAllocationBudgetPath = await _s3Service.GetViewUrlAsync(scholarship.AllocationBudgetDocumentPath) ?? scholarship.AllocationBudgetDocumentPath,
+            CurrentPrivacyPolicyPath = await _s3Service.GetViewUrlAsync(scholarship.PrivacyPolicyDocumentPath) ?? scholarship.PrivacyPolicyDocumentPath
         };
 
         return View(model);
@@ -326,10 +329,10 @@ public class ProviderController : Controller
         if (!ModelState.IsValid)
         {
             model.ScholarshipId = id;
-            model.CurrentPolicyFrameworkPath = scholarship.PolicyFrameworkDocumentPath;
-            model.CurrentEligibilityCriteriaPath = scholarship.EligibilityCriteriaDocumentPath;
-            model.CurrentAllocationBudgetPath = scholarship.AllocationBudgetDocumentPath;
-            model.CurrentPrivacyPolicyPath = scholarship.PrivacyPolicyDocumentPath;
+            model.CurrentPolicyFrameworkPath = await _s3Service.GetViewUrlAsync(scholarship.PolicyFrameworkDocumentPath) ?? scholarship.PolicyFrameworkDocumentPath;
+            model.CurrentEligibilityCriteriaPath = await _s3Service.GetViewUrlAsync(scholarship.EligibilityCriteriaDocumentPath) ?? scholarship.EligibilityCriteriaDocumentPath;
+            model.CurrentAllocationBudgetPath = await _s3Service.GetViewUrlAsync(scholarship.AllocationBudgetDocumentPath) ?? scholarship.AllocationBudgetDocumentPath;
+            model.CurrentPrivacyPolicyPath = await _s3Service.GetViewUrlAsync(scholarship.PrivacyPolicyDocumentPath) ?? scholarship.PrivacyPolicyDocumentPath;
             return View(model);
         }
 
@@ -452,7 +455,6 @@ public class ProviderController : Controller
     // VIEW APPLICATIONS (Accepts either 'id' or 'scholarshipId' from routing)
     public async Task<IActionResult> Applications(int? id, int? scholarshipId)
     {
-        // Resolve ID regardless of whether route passed 'id' or 'scholarshipId'
         int targetScholarshipId = id ?? scholarshipId ?? 0;
 
         if (targetScholarshipId == 0)
@@ -471,7 +473,6 @@ public class ProviderController : Controller
         ViewBag.ScholarshipTitle = scholarship.Title;
         ViewBag.ScholarshipId = scholarship.ScholarshipId;
 
-        // Fetch ALL applications for this scholarship (ignoring case for Drafts)
         var applicationsList = await _context.Applications
             .Where(a => a.ScholarshipId == targetScholarshipId &&
                         a.Status != null &&
@@ -484,7 +485,6 @@ public class ProviderController : Controller
             return View(new List<ApplicationReviewViewModel>());
         }
 
-        // Load Users & Profiles into Dictionaries for performance
         var studentIds = applicationsList.Select(a => a.StudentId).Distinct().ToList();
 
         var users = await _context.Users
@@ -495,7 +495,6 @@ public class ProviderController : Controller
             .Where(sp => studentIds.Contains(sp.UserId))
             .ToDictionaryAsync(sp => sp.UserId);
 
-        // Load Documents
         var applicationIds = applicationsList.Select(a => a.ApplicationId).ToList();
         var documents = await _context.Documents
             .Where(d => applicationIds.Contains(d.ApplicationId))
@@ -545,16 +544,8 @@ public class ProviderController : Controller
     {
         if (string.IsNullOrEmpty(filePath)) return "#";
 
-        try
-        {
-            // If your IS3Service has GetPreSignedUrlAsync, use it here:
-            // return await _s3Service.GetPreSignedUrlAsync(filePath);
-            return await Task.FromResult(filePath);
-        }
-        catch
-        {
-            return filePath;
-        }
+        var viewUrl = await _s3Service.GetViewUrlAsync(filePath);
+        return viewUrl ?? filePath;
     }
 
     // DECIDE ON APPLICATION
@@ -607,6 +598,12 @@ public class ProviderController : Controller
         });
 
         await _context.SaveChangesAsync();
+
+        // Fire-and-forget style call to the SNS-backed notification microservice.
+        // PublishAsync swallows its own exceptions, so a failure here never blocks the decision above.
+        await _notificationService.PublishAsync(
+            $"Scholarship Application {decision}",
+            message);
 
         TempData["SuccessMessage"] = $"Application {decision.ToLower()} and student notified.";
         return RedirectToAction(nameof(Applications), new { scholarshipId = scholarship.ScholarshipId });

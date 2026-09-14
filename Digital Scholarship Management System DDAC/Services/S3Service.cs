@@ -29,7 +29,6 @@ namespace Digital_Scholarship_Management_System_DDAC.Services
             var sessionToken = _config["AWS:SessionToken"];
             var regionEndpoint = RegionEndpoint.GetBySystemName(_region);
 
-            // Required for AWS Academy Learner Lab temporary session tokens
             if (!string.IsNullOrEmpty(sessionToken))
             {
                 return new AmazonS3Client(accessKey, secretKey, sessionToken, regionEndpoint);
@@ -43,7 +42,6 @@ namespace Digital_Scholarship_Management_System_DDAC.Services
             return new AmazonS3Client(regionEndpoint);
         }
 
-        // ✅ Updated return type to Task<string?> to match interface and return statements
         public async Task<string?> UploadFileAsync(IFormFile? file, string folderName = "uploads")
         {
             if (file == null || file.Length == 0) return null;
@@ -65,11 +63,9 @@ namespace Digital_Scholarship_Management_System_DDAC.Services
                 await client.PutObjectAsync(putRequest);
             }
 
-            // S3 Public URL to store in RDS database
             return $"https://{_bucketName}.s3.{_region}.amazonaws.com/{objectKey}";
         }
 
-        // ✅ Updated return type to Task<bool> to match interface
         public async Task<bool> DeleteFileAsync(string? fileUrl)
         {
             if (string.IsNullOrEmpty(fileUrl)) return false;
@@ -93,6 +89,34 @@ namespace Digital_Scholarship_Management_System_DDAC.Services
             {
                 Console.WriteLine($"[S3 Delete Warning]: Could not delete file: {ex.Message}");
                 return false;
+            }
+        }
+
+        // NEW: for parity with S3LambdaClientService, in case you ever flip the feature flag back.
+        public async Task<string?> GetViewUrlAsync(string? fileUrl)
+        {
+            if (string.IsNullOrEmpty(fileUrl)) return null;
+
+            try
+            {
+                Uri uri = new Uri(fileUrl);
+                string objectKey = uri.AbsolutePath.TrimStart('/');
+
+                using var client = GetS3Client();
+                var request = new GetPreSignedUrlRequest
+                {
+                    BucketName = _bucketName,
+                    Key = objectKey,
+                    Verb = HttpVerb.GET,
+                    Expires = DateTime.UtcNow.AddMinutes(15)
+                };
+
+                return await Task.FromResult(client.GetPreSignedURL(request));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[S3 GetViewUrl Warning]: {ex.Message}");
+                return null;
             }
         }
     }
