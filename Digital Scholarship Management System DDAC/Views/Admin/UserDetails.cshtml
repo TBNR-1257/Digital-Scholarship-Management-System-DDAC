@@ -107,9 +107,9 @@
 
                     <dt class="col-sm-3">Registration Document</dt>
                     <dd class="col-sm-9">
-                        @if (!string.IsNullOrWhiteSpace(Model.InstitutionProfile.RegistrationDocumentPath))
+                        @if (!string.IsNullOrWhiteSpace(ViewBag.RegistrationDocumentUrl))
                         {
-                            <a href="@Model.InstitutionProfile.RegistrationDocumentPath" target="_blank">View Document</a>
+                            <a href="@ViewBag.RegistrationDocumentUrl" target="_blank">View Document</a>
                         }
                         else
                         {

@@ -542,14 +542,8 @@ public class ProviderController : Controller
     {
         if (string.IsNullOrEmpty(filePath)) return "#";
 
-        try
-        {
-            return await Task.FromResult(filePath);
-        }
-        catch
-        {
-            return filePath;
-        }
+        var url = await _s3Service.GetViewUrlAsync(filePath);
+        return url ?? "#";
     }
 
     [HttpPost]

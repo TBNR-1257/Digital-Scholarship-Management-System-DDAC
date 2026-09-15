@@ -207,18 +207,38 @@ public class StudentController : Controller
             .Where(d => applicationIds.Contains(d.ApplicationId))
             .ToListAsync();
 
-        var trackingList = applications.Select(a => new ApplicationTrackerViewModel
+        // NOTE: rewritten from LINQ .Select to a foreach loop, since presigning each
+        // document's URL requires an await per item, which .Select cannot do.
+        var trackingList = new List<ApplicationTrackerViewModel>();
+
+        foreach (var a in applications)
         {
-            ApplicationId = a.ApplicationId,
-            ScholarshipTitle = a.ScholarshipTitle,
-            Status = a.Status,
-            ScholarshipStatus = a.ScholarshipStatus,
-            SubmittedAt = a.SubmittedAt,
-            Documents = documents
-                .Where(d => d.ApplicationId == a.ApplicationId)
-                .Select(ToDocumentViewModel)
-                .ToList()
-        }).ToList();
+            var docsForApp = documents.Where(d => d.ApplicationId == a.ApplicationId).ToList();
+            var docViewModels = new List<ApplicationDocumentViewModel>();
+
+            foreach (var d in docsForApp)
+            {
+                docViewModels.Add(new ApplicationDocumentViewModel
+                {
+                    DocumentId = d.DocumentId,
+                    DocumentType = d.DocumentType,
+                    DocumentTypeLabel = DocumentTypeCatalog.GetLabel(d.DocumentType),
+                    FileName = d.FileName,
+                    FilePath = await _s3Service.GetViewUrlAsync(d.FilePath) ?? "#",
+                    VerificationStatus = d.VerificationStatus
+                });
+            }
+
+            trackingList.Add(new ApplicationTrackerViewModel
+            {
+                ApplicationId = a.ApplicationId,
+                ScholarshipTitle = a.ScholarshipTitle,
+                Status = a.Status,
+                ScholarshipStatus = a.ScholarshipStatus,
+                SubmittedAt = a.SubmittedAt,
+                Documents = docViewModels
+            });
+        }
 
         return View(trackingList);
     }
@@ -244,18 +264,23 @@ public class StudentController : Controller
             .Where(d => d.ApplicationId == applicationId)
             .ToListAsync();
 
+        var transcriptDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript);
+        var incomeDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof);
+        var certDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate);
+        var idDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard);
+
         var model = new ApplicationDocumentEditViewModel
         {
             ApplicationId = applicationId,
             ScholarshipTitle = scholarship?.Title ?? "Scholarship",
-            CurrentTranscriptFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript)?.FileName,
-            CurrentTranscriptFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript)?.FilePath,
-            CurrentIncomeProofFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof)?.FileName,
-            CurrentIncomeProofFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof)?.FilePath,
-            CurrentCertificateFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate)?.FileName,
-            CurrentCertificateFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate)?.FilePath,
-            CurrentIdCardFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard)?.FileName,
-            CurrentIdCardFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard)?.FilePath
+            CurrentTranscriptFileName = transcriptDoc?.FileName,
+            CurrentTranscriptFilePath = transcriptDoc != null ? await _s3Service.GetViewUrlAsync(transcriptDoc.FilePath) : null,
+            CurrentIncomeProofFileName = incomeDoc?.FileName,
+            CurrentIncomeProofFilePath = incomeDoc != null ? await _s3Service.GetViewUrlAsync(incomeDoc.FilePath) : null,
+            CurrentCertificateFileName = certDoc?.FileName,
+            CurrentCertificateFilePath = certDoc != null ? await _s3Service.GetViewUrlAsync(certDoc.FilePath) : null,
+            CurrentIdCardFileName = idDoc?.FileName,
+            CurrentIdCardFilePath = idDoc != null ? await _s3Service.GetViewUrlAsync(idDoc.FilePath) : null
         };
 
         return View(model);
@@ -286,15 +311,20 @@ public class StudentController : Controller
         if (!ModelState.IsValid)
         {
             var scholarship = await _context.Scholarships.FindAsync(application.ScholarshipId);
+            var transcriptDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript);
+            var incomeDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof);
+            var certDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate);
+            var idDoc = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard);
+
             model.ScholarshipTitle = scholarship?.Title ?? "Scholarship";
-            model.CurrentTranscriptFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript)?.FileName;
-            model.CurrentTranscriptFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Transcript)?.FilePath;
-            model.CurrentIncomeProofFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof)?.FileName;
-            model.CurrentIncomeProofFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IncomeProof)?.FilePath;
-            model.CurrentCertificateFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate)?.FileName;
-            model.CurrentCertificateFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.Certificate)?.FilePath;
-            model.CurrentIdCardFileName = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard)?.FileName;
-            model.CurrentIdCardFilePath = documents.FirstOrDefault(d => d.DocumentType == DocumentTypeCatalog.IdCard)?.FilePath;
+            model.CurrentTranscriptFileName = transcriptDoc?.FileName;
+            model.CurrentTranscriptFilePath = transcriptDoc != null ? await _s3Service.GetViewUrlAsync(transcriptDoc.FilePath) : null;
+            model.CurrentIncomeProofFileName = incomeDoc?.FileName;
+            model.CurrentIncomeProofFilePath = incomeDoc != null ? await _s3Service.GetViewUrlAsync(incomeDoc.FilePath) : null;
+            model.CurrentCertificateFileName = certDoc?.FileName;
+            model.CurrentCertificateFilePath = certDoc != null ? await _s3Service.GetViewUrlAsync(certDoc.FilePath) : null;
+            model.CurrentIdCardFileName = idDoc?.FileName;
+            model.CurrentIdCardFilePath = idDoc != null ? await _s3Service.GetViewUrlAsync(idDoc.FilePath) : null;
             return View(model);
         }
 
@@ -470,14 +500,4 @@ public class StudentController : Controller
             });
         }
     }
-
-    private static ApplicationDocumentViewModel ToDocumentViewModel(Document d) => new()
-    {
-        DocumentId = d.DocumentId,
-        DocumentType = d.DocumentType,
-        DocumentTypeLabel = DocumentTypeCatalog.GetLabel(d.DocumentType),
-        FileName = d.FileName,
-        FilePath = d.FilePath,
-        VerificationStatus = d.VerificationStatus
-    };
 }

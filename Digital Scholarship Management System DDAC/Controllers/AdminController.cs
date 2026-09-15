@@ -1,6 +1,7 @@
 using Digital_Scholarship_Management_System_DDAC.Data;
 using Digital_Scholarship_Management_System_DDAC.Models;
 using Digital_Scholarship_Management_System_DDAC.Models.ViewModels;
+using Digital_Scholarship_Management_System_DDAC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,14 @@ public class AdminController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ApplicationDbContext _context;
+    private readonly IS3Service _s3Service;
 
-    public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
+    public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context, IS3Service s3Service)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
+        _s3Service = s3Service;
     }
 
     public IActionResult Index()
@@ -107,6 +110,11 @@ public class AdminController : Controller
         else if (role == "Provider")
         {
             model.InstitutionProfile = await _context.InstitutionProfiles.FirstOrDefaultAsync(p => p.UserId == user.Id);
+        }
+
+        if (model.InstitutionProfile != null && !string.IsNullOrEmpty(model.InstitutionProfile.RegistrationDocumentPath))
+        {
+            ViewBag.RegistrationDocumentUrl = await _s3Service.GetViewUrlAsync(model.InstitutionProfile.RegistrationDocumentPath);
         }
 
         return View(model);

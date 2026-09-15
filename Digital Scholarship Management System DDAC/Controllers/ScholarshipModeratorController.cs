@@ -1,8 +1,9 @@
-using System.Security.Claims;
 using Digital_Scholarship_Management_System_DDAC.Data;
+using Digital_Scholarship_Management_System_DDAC.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Digital_Scholarship_Management_System_DDAC.Controllers;
 
@@ -10,10 +11,12 @@ namespace Digital_Scholarship_Management_System_DDAC.Controllers;
 public class ScholarshipModeratorController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly IS3Service _s3Service;
 
-    public ScholarshipModeratorController(ApplicationDbContext context)
+    public ScholarshipModeratorController(ApplicationDbContext context, IS3Service s3Service)
     {
         _context = context;
+        _s3Service = s3Service;
     }
 
     // DASHBOARD
@@ -70,6 +73,7 @@ public class ScholarshipModeratorController : Controller
 
         var account = await _context.Users.FindAsync(institution.UserId);
         ViewBag.AccountEmail = account?.Email;
+        ViewBag.RegistrationDocumentUrl = await _s3Service.GetViewUrlAsync(institution.RegistrationDocumentPath);
 
         return View(institution);
     }
@@ -143,6 +147,15 @@ public class ScholarshipModeratorController : Controller
 
         var account = await _context.Users.FindAsync(scholarship.CreatedByUserId);
         ViewBag.AccountEmail = account?.Email;
+
+        ViewBag.PolicyFrameworkUrl = !string.IsNullOrEmpty(scholarship.PolicyFrameworkDocumentPath)
+            ? await _s3Service.GetViewUrlAsync(scholarship.PolicyFrameworkDocumentPath) : null;
+        ViewBag.EligibilityCriteriaUrl = !string.IsNullOrEmpty(scholarship.EligibilityCriteriaDocumentPath)
+            ? await _s3Service.GetViewUrlAsync(scholarship.EligibilityCriteriaDocumentPath) : null;
+        ViewBag.AllocationBudgetUrl = !string.IsNullOrEmpty(scholarship.AllocationBudgetDocumentPath)
+            ? await _s3Service.GetViewUrlAsync(scholarship.AllocationBudgetDocumentPath) : null;
+        ViewBag.PrivacyPolicyUrl = !string.IsNullOrEmpty(scholarship.PrivacyPolicyDocumentPath)
+            ? await _s3Service.GetViewUrlAsync(scholarship.PrivacyPolicyDocumentPath) : null;
 
         return View(scholarship);
     }

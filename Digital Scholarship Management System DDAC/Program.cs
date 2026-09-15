@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Digital_Scholarship_Management_System_DDAC.Services;
 using Amazon.XRay.Recorder.Handlers.AspNetCore;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
+using Amazon.S3;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,10 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+
+builder.Services.AddAWSService<IAmazonS3>();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
@@ -24,6 +30,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IS3Service, S3Service>();
 
 Amazon.XRay.Recorder.Core.AWSXRayRecorder.InitializeInstance(configuration: builder.Configuration);
+AWSSDKHandler.RegisterXRayForAllServices();
 
 var app = builder.Build();
 
