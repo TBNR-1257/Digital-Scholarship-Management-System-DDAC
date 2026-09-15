@@ -2,7 +2,7 @@ using Digital_Scholarship_Management_System_DDAC.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Digital_Scholarship_Management_System_DDAC.Services;
-
+using Amazon.XRay.Recorder.Handlers.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +23,11 @@ builder.Services.AddRazorPages();
 // Register S3 Upload Service
 builder.Services.AddScoped<IS3Service, S3Service>();
 
+Amazon.XRay.Recorder.Core.AWSXRayRecorder.InitializeInstance(configuration: builder.Configuration);
+
 var app = builder.Build();
+
+app.UseXRay("Task1-Monolith");
 
 using (var scope = app.Services.CreateScope())
 {
