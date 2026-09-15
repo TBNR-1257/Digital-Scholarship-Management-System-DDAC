@@ -14,11 +14,13 @@ public class StudentController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IS3Service _s3Service;
+    private readonly IDocumentVerificationQueue _documentVerificationQueue;
 
-    public StudentController(ApplicationDbContext context, IS3Service s3Service)
+    public StudentController(ApplicationDbContext context, IS3Service s3Service, IDocumentVerificationQueue documentVerificationQueue)
     {
         _context = context;
         _s3Service = s3Service;
+        _documentVerificationQueue = documentVerificationQueue;
     }
 
     // 1. DASHBOARD & AUTOMATED SCHOLARSHIP MATCHING
@@ -183,14 +185,16 @@ public class StudentController : Controller
             SubmittedAt = DateTime.UtcNow
         };
 
+        
         _context.Applications.Add(application);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(); 
 
         await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.Transcript, model.TranscriptFile);
         await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.IncomeProof, model.IncomeProofFile);
         await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.Certificate, model.CertificateFile);
         await AddDocumentAsync(application.ApplicationId, DocumentTypeCatalog.IdCard, model.IdCardFile);
 
+        
         _context.Notifications.Add(new Notification
         {
             UserId = currentUserId,
@@ -459,7 +463,6 @@ public class StudentController : Controller
     }
 
     // ---- HELPERS ----
-
     private async Task AddDocumentAsync(int applicationId, string documentType, IFormFile? file)
     {
         if (file == null || file.Length == 0) return;
@@ -467,7 +470,7 @@ public class StudentController : Controller
         string? filePath = await _s3Service.UploadFileAsync(file, "student-documents");
         if (string.IsNullOrEmpty(filePath)) return;
 
-        _context.Documents.Add(new Document
+        var document = new Document
         {
             ApplicationId = applicationId,
             DocumentType = documentType,
@@ -475,7 +478,14 @@ public class StudentController : Controller
             FilePath = filePath,
             UploadedAt = DateTime.UtcNow,
             VerificationStatus = "Pending"
-        });
+        };
+
+        _context.Documents.Add(document);
+
+        await _context.SaveChangesAsync();
+
+        // Trigger SQS queue producer with generated DocumentId
+        await _documentVerificationQueue.SendForVerificationAsync(document.DocumentId, filePath, documentType);
     }
 
     private async Task ReplaceDocumentIfProvidedAsync(List<Document> existingDocuments, int applicationId, string documentType, IFormFile? newFile)

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Digital_Scholarship_Management_System_DDAC.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection")
@@ -42,6 +41,9 @@ builder.Services.AddHttpClient<INotificationService, NotificationServiceClient>(
 
     client.BaseAddress = new Uri(notificationServiceUrl);
 });
+
+builder.Services.AddAWSService<Amazon.SQS.IAmazonSQS>();
+builder.Services.AddScoped<IDocumentVerificationQueue, DocumentVerificationQueue>();
 
 var app = builder.Build();
 
